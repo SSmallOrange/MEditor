@@ -1,18 +1,20 @@
 #include <QApplication>
-#include <QMainWindow>
-
-#include <iostream>
+#include "app/AppContext.h"
+#include "ui/MainWindow.h"
 
 int main(int argc, char* argv[])
 {
-    QApplication app(argc, argv);
+	QApplication app(argc, argv);
 
-    QMainWindow window;
-    window.setWindowTitle("MapEditor");
-    window.resize(1280, 720);
-    window.show();
+	AppContext ctx;
 
-	std::cout << "Application started with " << argc << " arguments." << std::endl;
+	// 如果你暂时没有 qss 文件，这行可以先注释掉
+	const QString stylePath = QCoreApplication::applicationDirPath()
+		+ "/qss/mac_light.qss";
+	ctx.loadStyle(stylePath);
+	 
+	MainWindow w(&ctx);
+	w.show();
 
-    return app.exec();
+	return app.exec();
 }

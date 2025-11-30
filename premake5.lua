@@ -15,6 +15,7 @@ workspace "MEditor"
     filter "configurations:Release"
         defines { "NDEBUG" }
         optimize "On"
+        symbols "On"
     filter {}
 
 project "MEditor"
@@ -32,7 +33,8 @@ project "MEditor"
         "src/**.cpp",
         "src/**.ui",
         "src/**.qrc",
-        "src/**.ts"
+        "src/**.ts",
+        "src/qss/**.qss"
     }
 
     includedirs {
@@ -64,5 +66,11 @@ project "MEditor"
         runtime "Release"
         optimize "On"
         defines { "QT_NO_DEBUG" }
+
+    filter "configurations:*"
+        postbuildcommands {
+            '{MKDIR} "%{cfg.targetdir}/qss"',
+            '{COPY} "src/qss/*.qss" "%{cfg.targetdir}/qss"',
+        }
 
     filter {}

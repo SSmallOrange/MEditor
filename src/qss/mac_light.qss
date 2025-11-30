@@ -1,0 +1,314 @@
+﻿/************************************************
+ * 全局基础样式
+ ***********************************************/
+* {
+    outline: none;
+}
+
+/* 默认字体 + 颜色 */
+QWidget {
+    background: #f5f6f8;
+    color: #222222;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    font-size: 12px;
+}
+
+/* 主窗口保持透明，用于自绘圆角+阴影 */
+QMainWindow {
+    background: transparent;
+}
+
+/* centralWidget：中间大面板，带一点“玻璃”感觉 */
+QWidget#centralwidget {
+    background: transparent;
+}
+
+/* 外层圆角卡片 */
+QWidget#MainFrame {
+    background: #f4f5f9;
+    border-radius: 16px;
+}
+
+QWidget#widget {
+    background: transparent;
+}
+
+/************************************************
+ * 标题栏 TitleBarWidget
+ ***********************************************/
+QWidget#TitleBarWidget {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0  rgba(255,255,255,0.96),
+        stop:1  rgba(245,246,248,0.96)
+    );
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+}
+
+/* 标题文字 */
+QWidget#TitleBarWidget QLabel {
+    color: #333333;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 标题栏按钮（关闭 / 最大化等自定义按钮） */
+QWidget#TitleBarWidget QPushButton {
+    border: none;
+    background: transparent;
+    color: #444444;
+    border-radius: 12px;
+    padding: 0;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+QWidget#TitleBarWidget QPushButton:hover {
+    background: rgba(0,0,0,0.06);
+}
+
+QWidget#TitleBarWidget QPushButton:pressed {
+    background: rgba(0,0,0,0.12);
+}
+
+/************************************************
+ * 中心区域：MapView + InspectorPanel
+ ***********************************************/
+
+/* 地图视图区（你的 MapViewWidget，objectName 通常叫 mapViewWidget） */
+QWidget#mapViewWidget {
+    background: #f9fafc;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+/************************************************
+ * 右侧滚动条
+ ***********************************************/
+
+QWidget#widget QScrollArea {
+    background: transparent;
+    border: none;
+}
+
+/* 纵向滚动条整体区域 */
+QWidget#widget QScrollBar:vertical {
+    width: 8px;                  /* 整体更细 */
+    margin: 4px 2px 4px 0;       /* 上下留一点空隙，右侧离边框 2px */
+    background: transparent;
+}
+
+/* 滑块本体：小胶囊 */
+QWidget#widget QScrollBar::handle:vertical {
+    min-height: 40px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+/* hover 时稍微亮一点 */
+QWidget#widget QScrollBar::handle:vertical:hover {
+    background: rgba(0, 0, 0, 0.28);
+}
+
+/* 禁用“上下箭头”和多余区域 */
+QWidget#widget QScrollBar::add-line:vertical,
+QWidget#widget QScrollBar::sub-line:vertical {
+    height: 0px;
+    border: none;
+    background: none;
+}
+
+/* 防止边角处出现小块 */
+QWidget#widget QScrollBar::add-page:vertical,
+QWidget#widget QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/************************************************
+ * 表单控件：LineEdit / SpinBox / ComboBox
+ ***********************************************/
+QLineEdit,
+QSpinBox,
+QDoubleSpinBox,
+QComboBox {
+    background: rgba(255,255,255,0.95);
+    border: 1px solid #d0d4e5;
+    border-radius: 6px;
+    padding: 3px 6px;
+    color: #222222;
+}
+
+QLineEdit:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus,
+QComboBox:focus {
+    border: 1px solid #4c8dff;
+    background: #ffffff;
+}
+
+/* SpinBox 按钮去掉丑陋边框，做得更“mac 一点” */
+QSpinBox::up-button,
+QSpinBox::down-button,
+QDoubleSpinBox::up-button,
+QDoubleSpinBox::down-button {
+    width: 14px;
+    border: none;
+    background: transparent;
+}
+
+QSpinBox::up-button:hover,
+QSpinBox::down-button:hover,
+QDoubleSpinBox::up-button:hover,
+QDoubleSpinBox::down-button:hover {
+    background: rgba(0,0,0,0.04);
+}
+
+/* ComboBox 下拉箭头 */
+QComboBox::drop-down {
+    width: 18px;
+    border: none;
+    background: transparent;
+}
+
+QComboBox::down-arrow {
+    image: none;
+    width: 6px;
+    height: 6px;
+    border: 2px solid #666666;
+    border-left: transparent;
+    border-top: transparent;
+    transform: rotate(45deg);
+    margin-right: 6px;
+}
+
+/************************************************
+ * 按钮
+ ***********************************************/
+
+/* 全局按钮默认样式 */
+QPushButton {
+    background: rgba(255,255,255,0.9);
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 4px 10px;
+    color: #222222;
+}
+
+QPushButton:hover {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.12);
+}
+
+QPushButton:pressed {
+    background: #e7e9f2;
+    border-color: rgba(0,0,0,0.18);
+}
+
+QWidget#inspectorPanel {
+    background: #f5f6f8;           /* 比卡片明显更灰一点 */
+}
+
+/* 右侧面板内一些“灰色文字按钮”，比如 ... / +Tag */
+QWidget#inspectorPanel QPushButton#buttonMore,
+QWidget#inspectorPanel QPushButton#buttonAddTag {
+    background: transparent;
+    border: none;
+    color: #5a5f6b;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+QWidget#inspectorPanel QPushButton#buttonMore:hover,
+QWidget#inspectorPanel QPushButton#buttonAddTag:hover {
+    background: rgba(0,0,0,0.04);
+}
+
+QWidget#inspectorPanel QPushButton#buttonMore:pressed,
+QWidget#inspectorPanel QPushButton#buttonAddTag:pressed {
+    background: rgba(0,0,0,0.08);
+}
+
+QWidget#inspectorPanel QWidget#selectionWidget,
+QWidget#inspectorPanel QWidget#transformWidget,
+QWidget#inspectorPanel QWidget#tagsWidget,
+QWidget#inspectorPanel QWidget#customDataWidget {
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+/************************************************
+ * 状态栏 / 菜单（如果你以后用得到）
+ ***********************************************/
+QStatusBar {
+    background: transparent;
+    color: #666666;
+}
+
+QMenuBar {
+    background: transparent;
+    color: #333333;
+}
+
+QMenuBar::item:selected {
+    background: rgba(0,0,0,0.06);
+}
+
+/************ CheckBox 样式，保证能看见勾选框 ************/
+QCheckBox {
+    spacing: 6px;                    /* 方框和文字间距 */
+    color: #222222;
+}
+
+QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid #c3c7d7;
+    background: #ffffff;
+}
+
+/* 选中时填充蓝色 */
+QCheckBox::indicator:checked {
+    background: #9facb8;
+}
+
+/* hover 时稍微高亮边框 */
+QCheckBox::indicator:hover {
+    border-color: #8daafc;
+}
+
+/************ Custom Data 表格 ************/
+QTableWidget#tableCustomData {
+    background: #ffffff;
+    border: 1px solid #d0d4e5;
+    border-radius: 8px;
+    gridline-color: #e0e3f0;
+}
+
+/* 表头 */
+QTableWidget#tableCustomData QHeaderView::section {
+    background: #f3f4fa;
+    color: #555555;
+    padding: 4px 6px;
+    border: none;
+    border-right: 1px solid #dde0ee;
+    font-weight: 500;
+}
+
+/* 单元格文字 */
+QTableWidget#tableCustomData QTableView::item {
+    padding: 2px 4px;
+}
+
+/* 选中行的高亮 */
+QTableWidget#tableCustomData QTableView::item:selected {
+    background: #e4ebff;
+    color: #222222;
+}
+
+/************************************************
+ * 预留：将来可以加 Dark 主题 / 高亮色
+ * 你以后想做动态主题，可以把这里拆成多个 qss 文件
+ ***********************************************/

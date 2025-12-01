@@ -87,11 +87,6 @@ QWidget#mapViewWidget {
  * 右侧滚动条
  ***********************************************/
 
-QWidget#widget QScrollArea {
-    background: transparent;
-    border: none;
-}
-
 /* 纵向滚动条整体区域 */
 QWidget#widget QScrollBar:vertical {
     width: 8px;                  /* 整体更细 */
@@ -307,6 +302,30 @@ QTableWidget#tableCustomData QTableView::item:selected {
     background: #e4ebff;
     color: #222222;
 }
+
+/************************************************
+ * 统一卡片风格：右侧 scrollArea 内容容器
+ * 与 #TilesetsPanel / #TilesetsPanelWidget 视觉一致
+ ***********************************************/
+QWidget#widget QScrollArea#scrollArea QWidget#scrollAreaWidgetContents {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(255,255,255,0.96),
+        stop:1 rgba(245,247,251,0.94));
+    border: 1px solid #D8DFE7;
+    border-radius: 10px;
+    padding: 6px;      /* 与左侧一致的内边距 */
+    color: #2E3439;
+    /* 保持透明滚动条区域由已有规则处理 */
+}
+
+/* 若你仍希望 scrollArea 外框也有卡片边，保留这段即可（可选） */
+QWidget#widget QScrollArea#scrollArea {
+    background: transparent;         /* 外层透明，内部内容是卡片 */
+    border: none;
+    border-radius: 10px;              /* 仅用于裁剪滚动内容圆角 */
+}
+
+/* 右侧滚动条（保留你现有的窄、圆滑样式，不做改动） */
 
 /************************************************
  * 预留：将来可以加 Dark 主题 / 高亮色

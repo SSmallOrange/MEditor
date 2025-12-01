@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>TilesetsPanel/TilesetBlockAdd.png</file>
+        <file>TilesetsPanel/TilesetsPanel.qss</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>mac_light.qss</file>
+    </qresource>
+</RCC>

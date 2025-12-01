@@ -11,7 +11,7 @@ void AppContext::loadStyle(const QString& qssPath)
 		return;
 	}
 	const QString style = QString::fromUtf8(f.readAll());
-	qDebug() << "[Style] length =" << style.size();
-	qDebug().noquote() << "[Style] head =" << style.left(200);
+// 	qDebug() << "[Style] length =" << style.size();
+// 	qDebug().noquote() << "[Style] head =" << style.left(200);
 	qApp->setStyleSheet(style);
 }

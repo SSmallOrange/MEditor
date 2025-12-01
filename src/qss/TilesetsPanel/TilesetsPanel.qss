@@ -1,0 +1,228 @@
+/* ==============================
+   Global Base
+   ============================== */
+
+/* 同时匹配 TilesetsPanel（类构造设的 objectName）与 TilesetsPanelWidget（MainWindow.ui 中的实例名） */
+#TilesetsPanel, #TilesetsPanelWidget {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(255,255,255,0.96),
+        stop:1 rgba(245,247,251,0.94));
+    border: 1px solid #D8DFE7;
+    border-radius: 10px;
+    padding: 6px 6px 4px 6px;
+    font-family: "Segoe UI","Microsoft YaHei";
+    font-size: 12px;
+    color: #2E3439;
+}
+
+/* 去除 ScrollArea 边框 */
+QScrollArea#scrollArea,
+QScrollArea#scrollArea QWidget#scrollAreaWidgetContents {
+    background: transparent;
+    border: none;
+}
+
+/* ==============================
+   Header (Title Row)
+   ============================== */
+
+#labelIcon {
+    padding: 2px 4px 0 4px;
+    font-size: 14px;
+}
+
+#labelTitle {
+    color: #2A2F33;
+    font-weight: bold;
+    padding-left: 2px;
+}
+
+QToolButton#buttonCollapseAll {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.65);
+    border: 1px solid #D0D7DF;
+    padding: 0;
+}
+QToolButton#buttonCollapseAll:hover { background: #E8EDF2; }
+QToolButton#buttonCollapseAll:checked { background: #DDE3E9; }
+
+/* ==============================
+   Search Row
+   ============================== */
+
+QLineEdit#editSearch {
+    background: #E3E7EC;
+    border: 1px solid #D0D6DC;
+    border-radius: 14px;
+    padding: 4px 10px 4px 30px; /* 左侧预留放搜索图标的位置 */
+    selection-background-color: #B8D7FF;
+    color: #2E3236;
+}
+QLineEdit#editSearch:hover { background: #E8EBF0; }
+QLineEdit#editSearch:focus {
+    background: #FFFFFF;
+    border: 1px solid #7AA9E6;
+}
+QLineEdit#editSearch::placeholder { color: #7A858E; }
+
+/* 搜索输入左侧图标占位（稍后替换为你的 PNG） */
+/* QLineEdit#editSearch {
+    background-image: url(:/TilesetsPanel/search.png);  // TODO
+    background-position: 8px center;
+    background-repeat: no-repeat;
+} */
+
+/* Add Tileset Button */
+QToolButton#buttonAddTileset {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background: #FFFFFF;
+    border: 1px solid #D4DAE0;
+    font-weight: bold;
+    color: #3A4147;
+}
+QToolButton#buttonAddTileset:hover { background: #F1F4F7; }
+QToolButton#buttonAddTileset:pressed { background: #E2E6EB; }
+
+/* ==============================
+   Generic ToolButton Flat Style
+   ============================== */
+
+QToolButton {
+    background: transparent;
+    border: none;
+    padding: 0 4px;
+}
+QToolButton:hover {
+    background: rgba(0,0,0,0.06);
+    border-radius: 6px;
+}
+QToolButton:pressed { background: rgba(0,0,0,0.12); }
+
+/* ==============================
+   Tileset Block Widget Container
+   ============================== */
+
+TilesetBlockWidget {
+    background: rgba(255,255,255,0.78);
+    border: 1px solid #D7DDE4;
+    border-radius: 8px;
+    padding: 6px 6px 6px 8px;
+    margin: 0;
+}
+TilesetBlockWidget:hover { border: 1px solid #B6C3D0; }
+
+/* Header inside Block */
+TilesetBlockWidget QLabel#labelTitle {
+    font-weight: bold;
+    color: #222A30;
+    padding-left: 2px;
+}
+
+TilesetBlockWidget QToolButton#buttonManage,
+TilesetBlockWidget QToolButton#buttonCollapse,
+TilesetBlockWidget QToolButton#buttonRemove {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid #D2D8DE;
+    padding: 0;
+}
+TilesetBlockWidget QToolButton#buttonRemove { color: #B03838; }
+
+TilesetBlockWidget QToolButton#buttonManage:hover,
+TilesetBlockWidget QToolButton#buttonCollapse:hover,
+TilesetBlockWidget QToolButton#buttonRemove:hover { background: #E7ECF1; }
+
+TilesetBlockWidget QToolButton#buttonManage:pressed,
+TilesetBlockWidget QToolButton#buttonCollapse:pressed,
+TilesetBlockWidget QToolButton#buttonRemove:pressed { background: #D9DEE3; }
+
+TilesetBlockWidget QToolButton#buttonCollapse:checked { background: #DDE2E8; }
+
+/* ==============================
+   Tiles Table
+   ============================== */
+
+TilesetBlockWidget QTableWidget#tableTiles {
+    background: transparent;
+    gridline-color: transparent;
+    outline: none;
+    selection-background-color: transparent;
+    padding: 2px 0 2px 0;
+}
+TilesetBlockWidget QTableWidget#tableTiles::item {
+    margin: 2px;
+    padding: 0;
+    border: 1px solid #C9D2DB;
+    border-radius: 6px;
+    background: #F9FBFD;
+}
+TilesetBlockWidget QTableWidget#tableTiles::item:hover {
+    border: 1px solid #94B5D9;
+    background: #EFF6FC;
+}
+TilesetBlockWidget QTableWidget#tableTiles::item:selected {
+    border: 2px solid #4A89D8;
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+        stop:0 #D9ECFF, stop:1 #C3DCF8);
+    color: #102A43;
+}
+
+/* 折叠时的属性样式（需要代码里 setProperty("collapsed", ...)） */
+TilesetBlockWidget[collapsed="true"] QTableWidget#tableTiles {
+    min-height: 0;
+    max-height: 0;
+    padding: 0;
+}
+
+/* ==============================
+   ScrollBar
+   ============================== */
+
+QScrollBar:vertical {
+    background: transparent;
+    width: 10px;
+    margin: 4px 2px 4px 0;
+}
+QScrollBar::handle:vertical {
+    background: rgba(150,160,172,0.55);
+    min-height: 24px;
+    border-radius: 5px;
+}
+QScrollBar::handle:vertical:hover { background: rgba(120,130,140,0.70); }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
+
+/* ==============================
+   Status / Footer (如后续添加)
+   ============================== */
+
+QLabel#labelStatTiles, QLabel#labelStatTime {
+    color: #5B656E;
+    font-size: 11px;
+    padding: 2px 4px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid #D5DBE1;
+    border-radius: 6px;
+}
+
+/* ==============================
+   Placeholders for Future Icons
+   ============================== */
+
+/* TODO: 分类头部圆形图标（后续若重建为自定义 header，可在此使用） */
+/* QRadioButton {
+   // background-image: url(:/TilesetsPanel/category_env.png);
+} */
+
+/* TODO: tile 默认占位图（无图时可启用） */
+/* TilesetBlockWidget QTableWidget#tableTiles::item {
+   background-image: url(:/TilesetsPanel/tile_placeholder.png);
+   background-position: center;
+   background-repeat: no-repeat;
+} */

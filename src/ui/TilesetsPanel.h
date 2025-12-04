@@ -1,8 +1,5 @@
 ﻿#pragma once
 #include <QWidget>
-#include <QVBoxLayout>
-#include <QToolButton>
-#include "ui/Common.h"
 #include "ui_TilesetsPanel.h"
 #include "TilesetBlockWidget.h"
 
@@ -10,26 +7,7 @@ class TilesetsPanel : public QWidget
 {
 	Q_OBJECT
 public:
-	explicit TilesetsPanel(QWidget* parent = nullptr)
-		: QWidget(parent)
-	{
-		setObjectName("TilesetsPanel");
-		setAttribute(Qt::WA_StyledBackground, true);
-		ui.setupUi(this);
-		QFile f(":/TilesetsPanel/TilesetsPanel.qss");
-		qDebug() << "Resource exists?" << f.exists();
-		if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-			const QString css = QString::fromUtf8(f.readAll());
-			qDebug() << "Loaded QSS length =" << css.size();
-			qDebug().noquote() << css.left(120);
-			setStyleSheet(css);
-		}
-		else {
-			qWarning() << "Open failed";
-		}
-		qDebug() << "Panel objectName =" << objectName();
-		connectSignals();
-	}
+	explicit TilesetsPanel(QWidget* parent = nullptr);
 
 	Ui::TilesetsPanel ui;
 

@@ -55,7 +55,7 @@ QToolButton#buttonCollapseAll:checked { background: #DDE3E9; }
 QLineEdit#editSearch {
     background: #E3E7EC;
     border: 1px solid #D0D6DC;
-    border-radius: 14px;
+    border-radius: 6px;
     padding: 4px 10px 4px 30px; /* 左侧预留放搜索图标的位置 */
     selection-background-color: #B8D7FF;
     color: #2E3236;
@@ -179,24 +179,6 @@ TilesetBlockWidget[collapsed="true"] QTableWidget#tableTiles {
     max-height: 0;
     padding: 0;
 }
-
-/* ==============================
-   ScrollBar
-   ============================== */
-
-QScrollBar:vertical {
-    background: transparent;
-    width: 10px;
-    margin: 4px 2px 4px 0;
-}
-QScrollBar::handle:vertical {
-    background: rgba(150,160,172,0.55);
-    min-height: 24px;
-    border-radius: 5px;
-}
-QScrollBar::handle:vertical:hover { background: rgba(120,130,140,0.70); }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
 
 /* ==============================
    Status / Footer (如后续添加)

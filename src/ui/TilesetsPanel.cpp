@@ -1,7 +1,16 @@
-﻿#include "TilesetsPanel.h"
+﻿#include "ui/Common.h"
+#include "TilesetsPanel.h"
 #include "TilesetBlockWidget.h"
-#include <QToolButton>
-#include <QLineEdit>
+
+TilesetsPanel::TilesetsPanel(QWidget* parent)
+	: QWidget(parent)
+{
+	setObjectName("TilesetsPanel");
+	setAttribute(Qt::WA_StyledBackground, true);
+	ui.setupUi(this);
+	LOAD_QSS(":/TilesetsPanel/TilesetsPanel.qss");
+	connectSignals();
+}
 
 void TilesetsPanel::connectSignals()
 {

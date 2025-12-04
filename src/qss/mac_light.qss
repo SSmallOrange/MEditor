@@ -1,7 +1,8 @@
 ﻿/************************************************
  * 全局基础样式
  ***********************************************/
-* {
+*
+{
     outline: none;
 }
 
@@ -13,17 +14,18 @@ QWidget {
     font-size: 12px;
 }
 
-/* 主窗口保持透明，用于自绘圆角+阴影 */
+QLabel {
+    background: transparent;
+}
+
 QMainWindow {
     background: transparent;
 }
 
-/* centralWidget：中间大面板，带一点“玻璃”感觉 */
 QWidget#centralwidget {
     background: transparent;
 }
 
-/* 外层圆角卡片 */
 QWidget#MainFrame {
     background: #f4f5f9;
     border-radius: 16px;
@@ -87,37 +89,35 @@ QWidget#mapViewWidget {
  * 右侧滚动条
  ***********************************************/
 
-/* 纵向滚动条整体区域 */
-QWidget#widget QScrollBar:vertical {
-    width: 8px;                  /* 整体更细 */
-    margin: 4px 2px 4px 0;       /* 上下留一点空隙，右侧离边框 2px */
-    background: transparent;
-}
-
-/* 滑块本体：小胶囊 */
-QWidget#widget QScrollBar::handle:vertical {
-    min-height: 40px;
-    border-radius: 4px;
-    background: rgba(0, 0, 0, 0.18);
-}
-
-/* hover 时稍微亮一点 */
-QWidget#widget QScrollBar::handle:vertical:hover {
-    background: rgba(0, 0, 0, 0.28);
-}
-
-/* 禁用“上下箭头”和多余区域 */
-QWidget#widget QScrollBar::add-line:vertical,
-QWidget#widget QScrollBar::sub-line:vertical {
-    height: 0px;
+QScrollBar:vertical {
     border: none;
-    background: none;
+    background: transparent;
+    width: 10px;
+    margin: 0;
 }
 
-/* 防止边角处出现小块 */
-QWidget#widget QScrollBar::add-page:vertical,
-QWidget#widget QScrollBar::sub-page:vertical {
+QScrollBar::handle:vertical {
+    background: rgba(150,160,172,0.55);
+    min-height: 24px;
+    border-radius: 4px;
+    margin: 0 2px 0 0;       
+}
+
+QScrollBar::handle:vertical:hover {
+    background: rgba(120,130,140,0.70);
+}
+
+QScrollBar::add-page:vertical, 
+QScrollBar::sub-page:vertical {
     background: none;
+    border: none;
+}
+
+QScrollBar::add-line:vertical, 
+QScrollBar::sub-line:vertical {
+    height: 0px;
+    background: none;
+    border: none;
 }
 
 /************************************************
@@ -160,12 +160,29 @@ QDoubleSpinBox::down-button:hover {
 }
 
 /* ComboBox 下拉箭头 */
+QComboBox {
+    background: rgba(255,255,255,0.98);
+    border: 1px solid #C8D0DA;       /* 边框更清晰 */
+    border-radius: 8px;               /* 圆角更明显 */
+    padding: 3px 28px 3px 8px;        /* 右侧为下拉箭头留空间 */
+    color: #222222;
+}
+
+QComboBox:hover {
+    border: 1px solid #B7C3CF;
+    background: rgba(255,255,255,0.99);
+}
+QComboBox:focus {
+    border: 1px solid #4C8DFF;
+    background: #FFFFFF;
+}
+
+/* 下拉按钮区域与箭头：保持简洁 */
 QComboBox::drop-down {
-    width: 18px;
+    width: 22px;
     border: none;
     background: transparent;
 }
-
 QComboBox::down-arrow {
     image: none;
     width: 6px;
@@ -175,6 +192,40 @@ QComboBox::down-arrow {
     border-top: transparent;
     transform: rotate(45deg);
     margin-right: 6px;
+}
+
+/* 下拉弹窗列表：扁平但清晰的边框与圆角 */
+QComboBox::view {
+    background: #FFFFFF;
+    border: 1px solid #202020;   /* 边框更清晰 */
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QComboBox QAbstractItemView {
+    background: #FFFFFF;
+    border: 1px solid #202020;   /* 与 ::view 一致 */
+    border-radius: 8px;
+    outline: 0;
+    padding: 4px;
+}
+
+QComboBox QAbstractItemView::viewport {
+    background: #FFFFFF;         /* 防止透明导致“看不清边框” */
+    border: none;                /* 仅外层绘制边框 */
+}
+
+/* 列表项样式：清晰 hover/selected */
+QComboBox QAbstractItemView::item {
+    padding: 6px 10px;
+    border-radius: 6px;               /* 项内圆角，视觉更柔和 */
+}
+QComboBox QAbstractItemView::item:hover {
+    background: #F3F6FB;
+}
+QComboBox QAbstractItemView::item:selected {
+    background: #E4EBFF;
+    color: #222222;
 }
 
 /************************************************
@@ -200,41 +251,8 @@ QPushButton:pressed {
     border-color: rgba(0,0,0,0.18);
 }
 
-QWidget#inspectorPanel {
-    background: #f5f6f8;           /* 比卡片明显更灰一点 */
-}
-
-/* 右侧面板内一些“灰色文字按钮”，比如 ... / +Tag */
-QWidget#inspectorPanel QPushButton#buttonMore,
-QWidget#inspectorPanel QPushButton#buttonAddTag {
-    background: transparent;
-    border: none;
-    color: #5a5f6b;
-    padding: 2px 4px;
-    border-radius: 4px;
-}
-
-QWidget#inspectorPanel QPushButton#buttonMore:hover,
-QWidget#inspectorPanel QPushButton#buttonAddTag:hover {
-    background: rgba(0,0,0,0.04);
-}
-
-QWidget#inspectorPanel QPushButton#buttonMore:pressed,
-QWidget#inspectorPanel QPushButton#buttonAddTag:pressed {
-    background: rgba(0,0,0,0.08);
-}
-
-QWidget#inspectorPanel QWidget#selectionWidget,
-QWidget#inspectorPanel QWidget#transformWidget,
-QWidget#inspectorPanel QWidget#tagsWidget,
-QWidget#inspectorPanel QWidget#customDataWidget {
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.04);
-}
-
 /************************************************
- * 状态栏 / 菜单（如果你以后用得到）
+ * 状态栏 / 菜单
  ***********************************************/
 QStatusBar {
     background: transparent;
@@ -264,70 +282,10 @@ QCheckBox::indicator {
     background: #ffffff;
 }
 
-/* 选中时填充蓝色 */
 QCheckBox::indicator:checked {
     background: #9facb8;
 }
 
-/* hover 时稍微高亮边框 */
 QCheckBox::indicator:hover {
     border-color: #8daafc;
 }
-
-/************ Custom Data 表格 ************/
-QTableWidget#tableCustomData {
-    background: #ffffff;
-    border: 1px solid #d0d4e5;
-    border-radius: 8px;
-    gridline-color: #e0e3f0;
-}
-
-/* 表头 */
-QTableWidget#tableCustomData QHeaderView::section {
-    background: #f3f4fa;
-    color: #555555;
-    padding: 4px 6px;
-    border: none;
-    border-right: 1px solid #dde0ee;
-    font-weight: 500;
-}
-
-/* 单元格文字 */
-QTableWidget#tableCustomData QTableView::item {
-    padding: 2px 4px;
-}
-
-/* 选中行的高亮 */
-QTableWidget#tableCustomData QTableView::item:selected {
-    background: #e4ebff;
-    color: #222222;
-}
-
-/************************************************
- * 统一卡片风格：右侧 scrollArea 内容容器
- * 与 #TilesetsPanel / #TilesetsPanelWidget 视觉一致
- ***********************************************/
-QWidget#widget QScrollArea#scrollArea QWidget#scrollAreaWidgetContents {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255,255,255,0.96),
-        stop:1 rgba(245,247,251,0.94));
-    border: 1px solid #D8DFE7;
-    border-radius: 10px;
-    padding: 6px;      /* 与左侧一致的内边距 */
-    color: #2E3439;
-    /* 保持透明滚动条区域由已有规则处理 */
-}
-
-/* 若你仍希望 scrollArea 外框也有卡片边，保留这段即可（可选） */
-QWidget#widget QScrollArea#scrollArea {
-    background: transparent;         /* 外层透明，内部内容是卡片 */
-    border: none;
-    border-radius: 10px;              /* 仅用于裁剪滚动内容圆角 */
-}
-
-/* 右侧滚动条（保留你现有的窄、圆滑样式，不做改动） */
-
-/************************************************
- * 预留：将来可以加 Dark 主题 / 高亮色
- * 你以后想做动态主题，可以把这里拆成多个 qss 文件
- ***********************************************/

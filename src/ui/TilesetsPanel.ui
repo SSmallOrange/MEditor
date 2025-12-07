@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>320</width>
-    <height>531</height>
+    <width>314</width>
+    <height>518</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -30,11 +30,26 @@
     <layout class="QHBoxLayout" name="layoutHeader">
      <item>
       <widget class="QLabel" name="labelIcon">
+       <property name="minimumSize">
+        <size>
+         <width>16</width>
+         <height>16</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16</width>
+         <height>16</height>
+        </size>
+       </property>
        <property name="toolTip">
-        <string>Tilesets</string>
+        <string>瓦片图集</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
        </property>
        <property name="text">
-        <string>🗂</string>
+        <string/>
        </property>
       </widget>
      </item>
@@ -46,7 +61,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Tilesets</string>
+        <string>图集</string>
        </property>
       </widget>
      </item>
@@ -72,7 +87,7 @@
         <string>折叠/展开全部</string>
        </property>
        <property name="text">
-        <string>▾</string>
+        <string/>
        </property>
        <property name="checkable">
         <bool>true</bool>
@@ -89,7 +104,7 @@
      <item>
       <widget class="QLineEdit" name="editSearch">
        <property name="placeholderText">
-        <string>Search</string>
+        <string>搜索图集...</string>
        </property>
       </widget>
      </item>
@@ -102,10 +117,10 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>新增 Tileset</string>
+        <string>新建图集</string>
        </property>
        <property name="text">
-        <string>＋</string>
+        <string/>
        </property>
       </widget>
      </item>
@@ -124,8 +139,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>302</width>
-        <height>443</height>
+        <width>296</width>
+        <height>430</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="layoutScroll">

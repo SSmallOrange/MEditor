@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ui_TitleBarWidget.h"
-
 #include <QWidget>
 
 class QLabel;
@@ -14,7 +13,6 @@ public:
 	explicit TitleBarWidget(QWidget* parent = nullptr);
 
 protected:
-	void paintEvent(QPaintEvent* event) override;
 	void mousePressEvent(QMouseEvent* event) override;
 	void mouseMoveEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;

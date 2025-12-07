@@ -38,7 +38,8 @@ project "MEditor"
     }
 
     includedirs {
-        "src"
+        "src",
+        "src/ui"
     }
 
     -- QT

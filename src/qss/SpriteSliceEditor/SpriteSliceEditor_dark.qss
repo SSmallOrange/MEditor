@@ -1,0 +1,260 @@
+/* SpriteSliceEditor_dark.qss */
+/* ==============================
+   SpriteSliceEditorWidget Base
+   ============================== */
+
+/*  TilesetsPanel ǳɫԲǱ߿ */
+#SpriteSliceEditorWidget {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(0,0,0,0.96),
+        stop:1 rgba(106,137,199,0.94));
+    border: 1px solid #181F27;
+    border-radius: 10px;
+    padding: 6px;
+    font-family: "Segoe UI","Microsoft YaHei";
+    font-size: 12px;
+    color: #C6CCD1;
+}
+
+/* ==============================
+   ToolBar + Return Button
+   ============================== */
+
+QToolBar#toolBar {
+    background: transparent;
+    border: none;
+    padding: 2px 4px;
+}
+QToolBar#toolBar QToolButton {
+    background: transparent;
+    border: none;
+    padding: 0 6px;
+    color: #C6CCD1;
+}
+QToolBar#toolBar QToolButton:hover {
+    background: rgba(0,0,0,0.06);
+    border-radius: 6px;
+}
+QToolBar#toolBar QToolButton:pressed {
+    background: rgba(0,0,0,0.12);
+}
+
+/* Ϸذťͼ+ְť */
+QPushButton#btnReturn {
+    background: rgba(0,0,0,0.9);
+    border: 1px solid #1F252B;
+    border-radius: 10px;
+    padding: 4px 10px;
+    color: #B8BFC5;
+}
+QPushButton#btnReturn:hover { background: #7A98B5; border-color: #2C3238; }
+QPushButton#btnReturn:pressed { background: #14181D; border-color: #383F46; }
+
+/* ==============================
+   ࣺSprite Sheets + Grid Settings
+   ============================== */
+
+/*  TilesetsPanel  block ƣ */
+QWidget#LeftSpriteSheetsWidget {
+    background: rgba(0,0,0,0.78);
+    border: 1px solid #1B2128;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+/* GroupBox ݼ */
+QGroupBox#spriteSheetGroupBox,
+QGroupBox#gridSettingsGroupBox {
+    background: transparent;
+    border: 1px solid #1B2128;
+    border-radius: 8px;
+    margin-top: 10px;                  /* ռ */
+}
+QGroupBox#spriteSheetGroupBox::title,
+QGroupBox#gridSettingsGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6px;
+    color: #CFD7DD;
+    font-weight: bold;
+}
+
+/* SpriteSheet б밴ť */
+QListWidget#spriteSheetListWidget {
+    background: #6399CE;
+    border: 1px solid #23292F;
+    border-radius: 6px;
+    padding: 4px;
+}
+QListWidget#spriteSheetListWidget::item {
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+QListWidget#spriteSheetListWidget::item:hover {
+    background: #4E9EE2;
+}
+QListWidget#spriteSheetListWidget::item:selected {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+        stop:0 #2F97FF, stop:1 #3E91ED);
+    color: #3485D3;
+    border: 1px solid #5B8FC8;
+}
+
+
+
+/* ==============================
+   룺ͼײ״̬
+   ============================== */
+
+QWidget#centerVerticalWidget {
+    background: rgba(0,0,0,0.78);
+    border: 1px solid #1B2128;
+    border-radius: 8px;
+    padding: 6px;
+}
+QGraphicsView#graphicsView {
+    background: #758DBC;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 8px;
+}
+QLabel#mousePosLabel,
+QLabel#zoomTextLabel,
+QLabel#zoomLabel {
+    color: #919BA4;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #1E242A;
+    border-radius: 6px;
+    padding: 2px 6px;
+}
+QSlider#zoomSlider {
+    padding: 0 6px;
+}
+
+/* ==============================
+   ҲࣺSlice/Tags/Pivot 
+   ============================== */
+
+QWidget#rightVerticalWidget {
+    background: rgba(0,0,0,0.78);
+    border: 1px solid #1B2128;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+QGroupBox#sliceInfoGroupBox,
+QGroupBox#tagsGroupBox,
+QGroupBox#pivotGroupBox {
+    background: transparent;
+    border: 1px solid #1B2128;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+QGroupBox#sliceInfoGroupBox::title,
+QGroupBox#tagsGroupBox::title,
+QGroupBox#pivotGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6px;
+    color: #CFD7DD;
+    font-weight: bold;
+}
+
+
+/* ==============================
+   ײƬ
+   ============================== */
+
+#SpriteSliceEditorWidget QTableWidget#sliceTableWidget {
+    background: rgba(0,0,0,0.99);
+    border: 1px solid #7496B7;
+    border-radius: 8px;
+    gridline-color: #788FB6;
+}
+#SpriteSliceEditorWidget QTableWidget#sliceTableWidget QHeaderView::section {
+    background: #6D8DC3;
+    color: #AAAAAA;
+    padding: 4px 6px;
+    border: none;
+    border-right: 1px solid #7792B7;
+    font-weight: 500;
+}
+#SpriteSliceEditorWidget QTableWidget#sliceTableWidget QTableWidget::item { padding: 2px 4px; }
+#SpriteSliceEditorWidget QTableWidget#sliceTableWidget QTableWidget::item:selected { background: #3066FF; color: #DDDDDD; }
+
+/* ===== ࣩ ===== */
+QWidget#headerBarWidget {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+        stop:0 rgba(0,0,0,0.96),
+        stop:1 rgba(106,137,199,0.94));
+    border: 1px solid #181F27;
+    border-radius: 8px;
+    padding: 6px 8px;          /* ڱ߾ */
+}
+
+QToolBar#toolBar {
+    background: transparent;   /*  headerBarWidget б */
+    border: none;
+    padding: 0;
+    spacing: 2px;              /* ߰ťࣨQt ʽ֧֣ */
+}
+
+QToolBar#toolBar QToolButton {
+    min-width: 28px;
+    min-height: 28px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.75);
+    border: 1px solid #20272F;
+    padding: 0 8px;            /* ֵİť */
+    color: #C6CCD1;
+}
+QToolBar#toolBar QToolButton:hover {
+    background: #7997B5;
+}
+QToolBar#toolBar QToolButton:pressed {
+    background: #1C2126;
+}
+QToolBar#toolBar QToolButton:checked {
+    background: #161C22;
+    border-color: #272F37;
+}
+
+/* ָģߣ */
+QToolBar#toolBar::separator {
+    width: 1px;
+    background: #161C23;
+    margin: 0 6px;
+}
+
+/* ߰ťͼСҲ .ui  iconSize */
+QToolBar#toolBar {
+    qproperty-iconSize: 16px 16px;
+}
+
+/* ===== Ҳ෵ذťͼ+֣ ===== */
+QPushButton#btnReturn {
+    min-height: 28px;
+    padding: 4px 12px 4px 10px;
+    border-radius: 8px;
+    background: #14161C;
+    border: 1px solid #1F252B;
+    color: #B8BFC5;
+    font-weight: 500;
+}
+QPushButton#btnReturn:hover {
+    background: #7A98B5;
+    border-color: #2C3238;
+}
+QPushButton#btnReturn:pressed {
+    background: #14181D;
+    border-color: #383F46;
+}
+QPushButton#btnReturn:disabled {
+    color: #505A65;
+    background: #060709;
+    border-color: #14181D;
+}
+
+/*  btnReturn ͼ꣬ͼּ */
+QPushButton#btnReturn {
+    qproperty-iconSize: 18px 18px;
+}

@@ -1,4 +1,5 @@
-﻿/************************************************
+/* mac_dark.qss */
+/************************************************
  * 全局基础样式
  ***********************************************/
 *
@@ -8,8 +9,8 @@
 
 /* 默认字体 + 颜色 */
 QWidget {
-    background: #f5f6f8;
-    color: #222222;
+    background: #07080A;
+    color: #DDDDDD;
     font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
     font-size: 12px;
 }
@@ -27,7 +28,7 @@ QWidget#centralwidget {
 }
 
 QWidget#MainFrame {
-    background: #f4f5f9;
+    background: #7885B8;
     border-radius: 16px;
 }
 
@@ -38,82 +39,43 @@ QWidget#widget {
 /************************************************
  * 标题栏 TitleBarWidget
  ***********************************************/
-#toolBarWidget {
-    background: rgba(249, 251, 253, 230);
-    border-radius: 12px;
-    border: 1px solid rgba(216, 223, 231,255);
+QWidget#TitleBarWidget {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0  rgba(0,0,0,245),
+        stop:1  rgba(7,8,10,245)
+    );
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
 }
 
 /* 标题文字 */
-#toolBarWidget QLabel {
-    color: #333333;
+QWidget#TitleBarWidget QLabel {
+    color: #CCCCCC;
     font-size: 12px;
     font-weight: 500;
 }
 
 /* 标题栏按钮（关闭 / 最大化等自定义按钮） */
-#toolBarWidget QPushButton#btnRestart {
-    qproperty-icon: url(:/restart.png);
+QWidget#TitleBarWidget QPushButton {
+    background: rgba(0,0,0,230);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 12px;
+    padding: 6px 12px;
     qproperty-iconSize: 18px 18px;
-
-    background: rgba(249, 251, 253, 230);
-    border: 1px solid rgba(216, 223, 231,255);
-    border-radius: 12px;
-
-    padding: 4px 12px 4px 16px; /* top right bottom left */
 }
 
-#toolBarWidget QPushButton#btnSave {
-    qproperty-icon: url(:/save.png);
-    qproperty-iconSize: 18px 18px;
-
-    background: rgba(249, 251, 253, 230);
-    border: 1px solid rgba(216, 223, 231,255);
-    border-radius: 12px;
-
-    padding: 4px 12px 4px 16px;
-}
-
-#toolBarWidget QPushButton#btnImport {
-    qproperty-icon: url(:/import.png);
-    qproperty-iconSize: 18px 18px;
-
-    background: rgba(249, 251, 253, 230);
-    border: 1px solid rgba(216, 223, 231,255);
-    border-radius: 12px;
-
-    padding: 4px 12px 4px 16px;
-}
-
-#toolBarWidget QPushButton#btnMinimize {
-    qproperty-icon: url(:/minimize.png);
-    qproperty-iconSize: 18px 18px;
-
-    background: rgba(249, 251, 253, 230);
-    border: 1px solid rgba(216, 223, 231,255);
-    border-radius: 12px;
-}
-
-#toolBarWidget QPushButton#btnClose {
-    qproperty-icon: url(:/close.png);
-    qproperty-iconSize: 16px 16px;
-
-    background: rgba(249, 251, 253, 230);
-    border: 1px solid rgba(216, 223, 231,255);
-    border-radius: 12px;
-
-    padding: 4px 4px 4px 4px;
-}
-
-#toolBarWidget QPushButton:hover {
-    background: #ffffff;
+QWidget#TitleBarWidget QPushButton:hover {
+    background: #14161C;
     background: rgba(0,0,0,0.06);
 }
 
-#toolBarWidget QPushButton:pressed {
-    background: #e7e9f2;
+QWidget#TitleBarWidget QPushButton:pressed {
+    background: #7783B8;
     background: rgba(0,0,0,0.12);
 }
+
+
 
 /************************************************
  * 中心区域：MapView + InspectorPanel
@@ -121,7 +83,7 @@ QWidget#widget {
 
 /* 地图视图区（你的 MapViewWidget，objectName 通常叫 mapViewWidget） */
 QWidget#mapViewWidget {
-    background: #f9fafc;
+    background: #758DBC;
     border-radius: 12px;
     border: 1px solid rgba(0,0,0,0.06);
 }
@@ -138,14 +100,14 @@ QScrollBar:vertical {
 }
 
 QScrollBar::handle:vertical {
-    background: rgba(150,160,172,0.55);
+    background: rgba(83,93,105,0.55);
     min-height: 24px;
     border-radius: 4px;
     margin: 0 2px 0 0;       
 }
 
 QScrollBar::handle:vertical:hover {
-    background: rgba(120,130,140,0.70);
+    background: rgba(115,125,135,0.70);
 }
 
 QScrollBar::add-page:vertical, 
@@ -168,19 +130,19 @@ QLineEdit,
 QSpinBox,
 QDoubleSpinBox,
 QComboBox {
-    background: rgba(255,255,255,245);
-    border: 1px solid #d0d4e5;
+    background: rgba(0,0,0,245);
+    border: 1px solid #7582B5;
     border-radius: 6px;
     padding: 3px 6px;
-    color: #222222;
+    color: #DDDDDD;
 }
 
 QLineEdit:focus,
 QSpinBox:focus,
 QDoubleSpinBox:focus,
 QComboBox:focus {
-    border: 1px solid #4c8dff;
-    background: #ffffff;
+    border: 1px solid #2172FF;
+    background: #14161C;
 }
 
 /* SpinBox 按钮去掉丑陋边框，做得更“mac 一点” */
@@ -202,20 +164,20 @@ QDoubleSpinBox::down-button:hover {
 
 /* ComboBox 下拉箭头 */
 QComboBox {
-    background: rgba(255,255,255,245);
-    border: 1px solid #C8D0DA;       /* 边框更清晰 */
+    background: rgba(0,0,0,245);
+    border: 1px solid #252D37;       /* 边框更清晰 */
     border-radius: 8px;               /* 圆角更明显 */
     padding: 3px 28px 3px 8px;        /* 右侧为下拉箭头留空间 */
-    color: #222222;
+    color: #DDDDDD;
 }
 
 QComboBox:hover {
-    border: 1px solid #B7C3CF;
-    background: rgba(255,255,255,245);
+    border: 1px solid #303C48;
+    background: rgba(0,0,0,245);
 }
 QComboBox:focus {
-    border: 1px solid #4C8DFF;
-    background: #FFFFFF;
+    border: 1px solid #2172FF;
+    background: #14161C;
 }
 
 /* 下拉按钮区域与箭头：保持简洁 */
@@ -228,7 +190,7 @@ QComboBox::down-arrow {
     image: none;
     width: 6px;
     height: 6px;
-    border: 2px solid #666666;
+    border: 2px solid #999999;
     border-left: transparent;
     border-top: transparent;
     margin-right: 6px;
@@ -236,22 +198,22 @@ QComboBox::down-arrow {
 
 /* 下拉弹窗列表：扁平但清晰的边框与圆角 */
 QComboBox::view {
-    background: #FFFFFF;
-    border: 1px solid #202020;   /* 边框更清晰 */
+    background: #14161C;
+    border: 1px solid #DFDFDF;   /* 边框更清晰 */
     border-radius: 8px;
     padding: 4px;
 }
 
 QComboBox QAbstractItemView {
-    background: #FFFFFF;
-    border: 1px solid #202020;   /* 与 ::view 一致 */
+    background: #14161C;
+    border: 1px solid #DFDFDF;   /* 与 ::view 一致 */
     border-radius: 8px;
     outline: 0;
     padding: 4px;
 }
 
 QComboBox QAbstractItemView::viewport {
-    background: #FFFFFF;         /* 防止透明导致“看不清边框” */
+    background: #14161C;         /* 防止透明导致“看不清边框” */
     border: none;                /* 仅外层绘制边框 */
 }
 
@@ -261,11 +223,11 @@ QComboBox QAbstractItemView::item {
     border-radius: 6px;               /* 项内圆角，视觉更柔和 */
 }
 QComboBox QAbstractItemView::item:hover {
-    background: #F3F6FB;
+    background: #628BCE;
 }
 QComboBox QAbstractItemView::item:selected {
-    background: #E4EBFF;
-    color: #222222;
+    background: #3066FF;
+    color: #DDDDDD;
 }
 
 /************************************************
@@ -274,20 +236,20 @@ QComboBox QAbstractItemView::item:selected {
 
 /* 全局按钮默认样式 */
 QPushButton {
-    background: rgba(255,255,255,230);
+    background: rgba(0,0,0,230);
     border-radius: 6px;
     border: 1px solid rgba(0,0,0,0.06);
     padding: 4px 10px;
-    color: #222222;
+    color: #DDDDDD;
 }
 
 QPushButton:hover {
-    background: #ffffff;
+    background: #14161C;
     border-color: rgba(0,0,0,0.12);
 }
 
 QPushButton:pressed {
-    background: #e7e9f2;
+    background: #7783B8;
     border-color: rgba(0,0,0,0.18);
 }
 
@@ -296,12 +258,12 @@ QPushButton:pressed {
  ***********************************************/
 QStatusBar {
     background: transparent;
-    color: #666666;
+    color: #999999;
 }
 
 QMenuBar {
     background: transparent;
-    color: #333333;
+    color: #CCCCCC;
 }
 
 QMenuBar::item:selected {
@@ -311,21 +273,21 @@ QMenuBar::item:selected {
 /************ CheckBox 样式，保证能看见勾选框 ************/
 QCheckBox {
     spacing: 6px;                    /* 方框和文字间距 */
-    color: #222222;
+    color: #DDDDDD;
 }
 
 QCheckBox::indicator {
     width: 14px;
     height: 14px;
     border-radius: 4px;
-    border: 1px solid #c3c7d7;
-    background: #ffffff;
+    border: 1px solid #282C3C;
+    background: #14161C;
 }
 
 QCheckBox::indicator:checked {
-    background: #9facb8;
+    background: #475460;
 }
 
 QCheckBox::indicator:hover {
-    border-color: #8daafc;
+    border-color: #2860FF;
 }

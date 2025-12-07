@@ -1,13 +1,13 @@
 #pragma once
-
 #include <QMainWindow>
-#include "ui_MainWindow.h"
 
 class AppContext;
-class MapViewWidget;
-class QLabel;
-class TitleBarWidget;
-class InspectorPanel;
+
+QT_BEGIN_NAMESPACE
+namespace Ui {
+	class MainWindow;
+}
+QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
@@ -21,8 +21,12 @@ private:
 
 	void OnNewMap();
 
+private slots:
+	void SlotSwitchSpriteSliceWidget();
+	void SlotSwitchMainWidget();
+
 private:
 	AppContext* m_ctx = nullptr;
 	
-	Ui::MainWindow ui;
+	Ui::MainWindow* ui;
 };

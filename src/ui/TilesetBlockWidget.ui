@@ -51,16 +51,6 @@
       </spacer>
      </item>
      <item>
-      <widget class="QToolButton" name="buttonManage">
-       <property name="toolTip">
-        <string>管理此 Tileset</string>
-       </property>
-       <property name="text">
-        <string>🗂</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QToolButton" name="buttonCollapse">
        <property name="toolTip">
         <string>折叠/展开</string>

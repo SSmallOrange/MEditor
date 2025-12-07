@@ -1,21 +1,22 @@
+/* TilesetsPanel_dark.qss */
 /* ==============================
    Global Base
    ============================== */
 
-/* Í¬Ê±Æ¥Åä TilesetsPanel£¨Àà¹¹ÔìÉèµÄ objectName£©Óë TilesetsPanelWidget£¨MainWindow.ui ÖÐµÄÊµÀýÃû£© */
-#TilesetsPanelWidget {
+/* Í¬Ê±Æ¥ TilesetsPanelà¹¹ objectName TilesetsPanelWidgetMainWindow.ui ÐµÊµ */
+#TilesetsPanel, #TilesetsPanelWidget {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255,255,255,0.96),
-        stop:1 rgba(245,247,251,0.94));
-    border: 1px solid #D8DFE7;
+        stop:0 rgba(0,0,0,0.96),
+        stop:1 rgba(106,137,199,0.94));
+    border: 1px solid #181F27;
     border-radius: 10px;
     padding: 6px 6px 4px 6px;
     font-family: "Segoe UI","Microsoft YaHei";
     font-size: 12px;
-    color: #2E3439;
+    color: #C6CCD1;
 }
 
-/* È¥³ý ScrollArea ±ß¿ò */
+/* È¥ ScrollArea ß¿ */
 QScrollArea#scrollArea,
 QScrollArea#scrollArea QWidget#scrollAreaWidgetContents {
     background: transparent;
@@ -25,74 +26,67 @@ QScrollArea#scrollArea QWidget#scrollAreaWidgetContents {
 /* ==============================
    Header (Title Row)
    ============================== */
-#TilesetsPanelWidget QLabel#labelIcon {
-    min-width: 20px;
-    min-height: 20px;
 
-    qproperty-pixmap: url(:/TilesetsPanel/TilesetPanelIcon.png);
-    qproperty-scaledContents: 1;
-    qproperty-alignment: AlignCenter;
-    background: rgba(255,255,255,255);
+#labelIcon {
+    padding: 2px 4px 0 4px;
+    font-size: 14px;
 }
 
-#TilesetsPanelWidget #labelTitle {
-    color: #2A2F33;
+#labelTitle {
+    color: #CCD1D5;
     font-weight: bold;
+    padding-left: 2px;
 }
 
 QToolButton#buttonCollapseAll {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 6px;
-    qproperty-icon: url(:/TilesetsPanel/collapse.png);
-    qproperty-iconSize: 16px 16px;
-    qproperty-toolButtonStyle: ToolButtonIconOnly;
-    background: rgba(255,255,255,0.65);
-    border: 1px solid #D0D7DF;
+    background: rgba(0,0,0,0.65);
+    border: 1px solid #20272F;
+    padding: 0;
 }
-QToolButton#buttonCollapseAll:hover { background: #E8EDF2; }
-QToolButton#buttonCollapseAll:checked { background: #DDE3E9; }
+QToolButton#buttonCollapseAll:hover { background: #7997B5; }
+QToolButton#buttonCollapseAll:checked { background: #161C22; }
 
 /* ==============================
    Search Row
    ============================== */
 
 QLineEdit#editSearch {
-    background: #E3E7EC;
-    border: 1px solid #D0D6DC;
+    background: #13171C;
+    border: 1px solid #23292F;
     border-radius: 6px;
-    selection-background-color: #B8D7FF;
-    color: #2E3236;
+    padding: 4px 10px 4px 30px; /* Ô¤Í¼Î» */
+    selection-background-color: #2C88FF;
+    color: #C9CDD1;
 }
-
-QLineEdit#editSearch:hover {
-    background: #E8EBF0;
-    border: 1px solid #D0D6DC;
-}
-
+QLineEdit#editSearch:hover { background: #0F1217; }
 QLineEdit#editSearch:focus {
-    background: #FFFFFF;
-    border: 1px solid #7AA9E6;
+    background: #14161C;
+    border: 1px solid #4287E0;
 }
+QLineEdit#editSearch::placeholder { color: #717C85; }
 
-QLineEdit#editSearch::placeholder {
-    color: #7A858E;
-}
+/* Í¼Õ¼Î»Ôºæ»»Îª PNG */
+/* QLineEdit#editSearch {
+    background-image: url(:/TilesetsPanel/search.png);  // TODO
+    background-position: 8px center;
+    background-repeat: no-repeat;
+} */
 
 /* Add Tileset Button */
 QToolButton#buttonAddTileset {
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-    qproperty-icon: url(:/TilesetsPanel/add.png);
-    qproperty-iconSize: 16px 16px;
-    qproperty-toolButtonStyle: ToolButtonIconOnly;
-    background: #FFFFFF;
-    border: 1px solid #D4DAE0;
-    color: #3A4147;
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background: #14161C;
+    border: 1px solid #1F252B;
+    font-weight: bold;
+    color: #B8BFC5;
 }
-QToolButton#buttonAddTileset:hover { background: #F1F4F7; }
-QToolButton#buttonAddTileset:pressed { background: #E2E6EB; }
+QToolButton#buttonAddTileset:hover { background: #7A98B5; }
+QToolButton#buttonAddTileset:pressed { background: #14181D; }
 
 /* ==============================
    Generic ToolButton Flat Style
@@ -114,18 +108,18 @@ QToolButton:pressed { background: rgba(0,0,0,0.12); }
    ============================== */
 
 TilesetBlockWidget {
-    background: rgba(255,255,255,0.78);
-    border: 1px solid #D7DDE4;
+    background: rgba(0,0,0,0.78);
+    border: 1px solid #1B2128;
     border-radius: 8px;
     padding: 6px 6px 6px 8px;
     margin: 0;
 }
-TilesetBlockWidget:hover { border: 1px solid #B6C3D0; }
+TilesetBlockWidget:hover { border: 1px solid #2F3C49; }
 
 /* Header inside Block */
 TilesetBlockWidget QLabel#labelTitle {
     font-weight: bold;
-    color: #222A30;
+    color: #CFD7DD;
     padding-left: 2px;
 }
 
@@ -135,21 +129,21 @@ TilesetBlockWidget QToolButton#buttonRemove {
     width: 24px;
     height: 24px;
     border-radius: 6px;
-    background: rgba(255,255,255,0.55);
-    border: 1px solid #D2D8DE;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid #21272D;
     padding: 0;
 }
-TilesetBlockWidget QToolButton#buttonRemove { color: #B03838; }
+TilesetBlockWidget QToolButton#buttonRemove { color: #CA4C4C; }
 
 TilesetBlockWidget QToolButton#buttonManage:hover,
 TilesetBlockWidget QToolButton#buttonCollapse:hover,
-TilesetBlockWidget QToolButton#buttonRemove:hover { background: #E7ECF1; }
+TilesetBlockWidget QToolButton#buttonRemove:hover { background: #7A97B4; }
 
 TilesetBlockWidget QToolButton#buttonManage:pressed,
 TilesetBlockWidget QToolButton#buttonCollapse:pressed,
-TilesetBlockWidget QToolButton#buttonRemove:pressed { background: #D9DEE3; }
+TilesetBlockWidget QToolButton#buttonRemove:pressed { background: #1C2126; }
 
-TilesetBlockWidget QToolButton#buttonCollapse:checked { background: #DDE2E8; }
+TilesetBlockWidget QToolButton#buttonCollapse:checked { background: #171C22; }
 
 /* ==============================
    Tiles Table
@@ -165,22 +159,22 @@ TilesetBlockWidget QTableWidget#tableTiles {
 TilesetBlockWidget QTableWidget#tableTiles::item {
     margin: 2px;
     padding: 0;
-    border: 1px solid #C9D2DB;
+    border: 1px solid #242D36;
     border-radius: 6px;
-    background: #F9FBFD;
+    background: #6399CE;
 }
 TilesetBlockWidget QTableWidget#tableTiles::item:hover {
-    border: 1px solid #94B5D9;
-    background: #EFF6FC;
+    border: 1px solid #5B8FC8;
+    background: #4E9EE2;
 }
 TilesetBlockWidget QTableWidget#tableTiles::item:selected {
-    border: 2px solid #4A89D8;
+    border: 2px solid #4185DB;
     background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
-        stop:0 #D9ECFF, stop:1 #C3DCF8);
-    color: #102A43;
+        stop:0 #2F97FF, stop:1 #3E91ED);
+    color: #3485D3;
 }
 
-/* ÕÛµþÊ±µÄÊôÐÔÑùÊ½£¨ÐèÒª´úÂëÀï setProperty("collapsed", ...)£© */
+/* ÛµÊ±Ê½Òª setProperty("collapsed", ...) */
 TilesetBlockWidget[collapsed="true"] QTableWidget#tableTiles {
     min-height: 0;
     max-height: 0;
@@ -188,15 +182,15 @@ TilesetBlockWidget[collapsed="true"] QTableWidget#tableTiles {
 }
 
 /* ==============================
-   Status / Footer (ÈçºóÐøÌí¼Ó)
+   Status / Footer ()
    ============================== */
 
 QLabel#labelStatTiles, QLabel#labelStatTime {
-    color: #5B656E;
+    color: #919BA4;
     font-size: 11px;
     padding: 2px 4px;
-    background: rgba(255,255,255,0.5);
-    border: 1px solid #D5DBE1;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid #1E242A;
     border-radius: 6px;
 }
 
@@ -204,12 +198,12 @@ QLabel#labelStatTiles, QLabel#labelStatTime {
    Placeholders for Future Icons
    ============================== */
 
-/* TODO: ·ÖÀàÍ·²¿Ô²ÐÎÍ¼±ê£¨ºóÐøÈôÖØ½¨Îª×Ô¶¨Òå header£¬¿ÉÔÚ´ËÊ¹ÓÃ£© */
+/* TODO: Í·Ô²Í¼ê£¨Ø½ÎªÔ¶ headerÚ´Ê¹Ã£ */
 /* QRadioButton {
    // background-image: url(:/TilesetsPanel/category_env.png);
 } */
 
-/* TODO: tile Ä¬ÈÏÕ¼Î»Í¼£¨ÎÞÍ¼Ê±¿ÉÆôÓÃ£© */
+/* TODO: tile Ä¬Õ¼Î»Í¼Í¼Ê±Ã£ */
 /* TilesetBlockWidget QTableWidget#tableTiles::item {
    background-image: url(:/TilesetsPanel/tile_placeholder.png);
    background-position: center;

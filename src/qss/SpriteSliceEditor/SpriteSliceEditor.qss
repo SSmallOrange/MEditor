@@ -1,0 +1,255 @@
+/* ==============================
+   spriteSliceEditorWidget Base
+   ============================== */
+
+/* 整体容器，与 TilesetsPanel 相近的浅色背景与圆角边框 */
+#spriteSliceEditorWidget {
+    background: qlineargradient(        
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(255,255,255,245),
+        stop:1 rgba(245,247,251,240)
+    );
+    border: 1px solid #D8DFE7;
+    border-radius: 10px;
+    padding: 6px;
+    font-family: "Segoe UI","Microsoft YaHei";
+    font-size: 12px;
+    color: #2E3439;
+}
+
+/* ==============================
+   ToolBar + Return Button
+   ============================== */
+
+QToolBar#toolBar {
+    background: transparent;
+    border: none;
+    padding: 2px 4px;
+}
+QToolBar#toolBar QToolButton {
+    background: transparent;
+    border: none;
+    padding: 0 6px;
+    color: #2E3439;
+}
+QToolBar#toolBar QToolButton:hover {
+    background: rgba(0,0,0,0.06);
+    border-radius: 6px;
+}
+QToolBar#toolBar QToolButton:pressed {
+    background: rgba(0,0,0,0.12);
+}
+
+/* 右上返回按钮（图标+文字按钮） */
+QPushButton#btnReturn {
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #D4DAE0;
+    border-radius: 10px;
+    padding: 4px 10px;
+    color: #3A4147;
+}
+QPushButton#btnReturn:hover { background: #F1F4F7; border-color: #C7CDD3; }
+QPushButton#btnReturn:pressed { background: #E2E6EB; border-color: #B9C0C7; }
+
+/* ==============================
+   左侧：Sprite Sheets + Grid Settings
+   ============================== */
+
+/* 左侧容器（与 TilesetsPanel 的 block 近似） */
+QWidget#LeftSpriteSheetsWidget {
+    background: rgba(255,255,255,0.78);
+    border: 1px solid #D7DDE4;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+/* GroupBox 标题与内容间距 */
+QGroupBox#spriteSheetGroupBox,
+QGroupBox#gridSettingsGroupBox {
+    background: transparent;
+    border: 1px solid #D7DDE4;
+    border-radius: 8px;
+    margin-top: 10px;                  /* 标题空间 */
+}
+QGroupBox#spriteSheetGroupBox::title,
+QGroupBox#gridSettingsGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6px;
+    color: #222A30;
+    font-weight: bold;
+}
+
+/* SpriteSheet 列表与按钮 */
+QListWidget#spriteSheetListWidget {
+    background: #F9FBFD;
+    border: 1px solid #D0D6DC;
+    border-radius: 6px;
+    padding: 4px;
+}
+QListWidget#spriteSheetListWidget::item {
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+QListWidget#spriteSheetListWidget::item:hover {
+    background: #EFF6FC;
+}
+QListWidget#spriteSheetListWidget::item:selected {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+        stop:0 #D9ECFF, stop:1 #C3DCF8);
+    color: #102A43;
+    border: 1px solid #94B5D9;
+}
+
+
+
+/* ==============================
+   中央：视图与底部状态
+   ============================== */
+
+QWidget#centerVerticalWidget {
+    background: rgba(255,255,255,0.78);
+    border: 1px solid #D7DDE4;
+    border-radius: 8px;
+    padding: 6px;
+}
+QGraphicsView#graphicsView {
+    background: #F9FAFC;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 8px;
+}
+QLabel#mousePosLabel,
+QLabel#zoomTextLabel,
+QLabel#zoomLabel {
+    color: #5B656E;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid #D5DBE1;
+    border-radius: 6px;
+    padding: 2px 6px;
+}
+QSlider#zoomSlider {
+    padding: 0 6px;
+}
+
+/* ==============================
+   右侧：Slice/Tags/Pivot 面板
+   ============================== */
+
+QWidget#rightVerticalWidget {
+    background: rgba(255,255,255,0.78);
+    border: 1px solid #D7DDE4;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+QGroupBox#sliceInfoGroupBox,
+QGroupBox#tagsGroupBox,
+QGroupBox#pivotGroupBox {
+    background: transparent;
+    border: 1px solid #D7DDE4;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+QGroupBox#sliceInfoGroupBox::title,
+QGroupBox#tagsGroupBox::title,
+QGroupBox#pivotGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6px;
+    color: #222A30;
+    font-weight: bold;
+}
+
+
+/* ==============================
+   底部：切片表格
+   ============================== */
+
+#spriteSliceEditorWidget QTableWidget#sliceTableWidget {
+    background: rgba(255,255,255,245);
+    border: 1px solid #D4DEE8;
+    border-radius: 8px;
+    gridline-color: #E6EAf1;
+}
+#spriteSliceEditorWidget QTableWidget#sliceTableWidget QHeaderView::section {
+    background: #F1F4F9;
+    color: #555;
+    padding: 4px 6px;
+    border: none;
+    border-right: 1px solid #E0E6EE;
+    font-weight: 500;
+}
+#spriteSliceEditorWidget QTableWidget#sliceTableWidget QTableWidget::item { padding: 2px 4px; }
+#spriteSliceEditorWidget QTableWidget#sliceTableWidget QTableWidget::item:selected { background: #e4ebff; color: #222; }
+
+/* ===== 标题栏工具栏（左侧） ===== */
+QWidget#headerBarWidget {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+        stop:0 rgba(255,255,255,0.96),
+        stop:1 rgba(245,247,251,0.94));
+    border: 1px solid #D8DFE7;
+    border-radius: 8px;
+    padding: 6px 8px;          /* 顶部行整体内边距 */
+}
+
+QToolBar#toolBar {
+    background: transparent;   /* 外层 headerBarWidget 已有背景 */
+    border: none;
+    padding: 0;
+    spacing: 2px;              /* 工具按钮间距（Qt 样式支持） */
+}
+
+QToolBar#toolBar QToolButton {
+    min-width: 28px;
+    min-height: 28px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.75);
+    border: 1px solid #D0D7DF;
+    padding: 0 8px;            /* 有文字的按钮更舒适 */
+    color: #2E3439;
+}
+QToolBar#toolBar QToolButton:hover {
+    background: #E8EDF2;
+}
+QToolBar#toolBar QToolButton:pressed {
+    background: #D9DEE3;
+}
+QToolBar#toolBar QToolButton:checked {
+    background: #DDE3E9;
+    border-color: #C8D0D8;
+}
+
+/* 工具栏分隔符（模拟竖线） */
+QToolBar#toolBar::separator {
+    width: 1px;
+    background: #DCE2E9;
+    margin: 0 6px;
+}
+
+/* 工具按钮图标大小（也可在 .ui 设置 iconSize） */
+QToolBar#toolBar {
+    qproperty-iconSize: 16px 16px;
+}
+
+/* ===== 标题栏右侧返回按钮（图标+文字） ===== */
+QPushButton#btnReturn {
+    qproperty-icon: url(:/SpriteSliceEditor/Return.png);
+    qproperty-iconSize: 18px 18px;
+    border-radius: 8px;
+    background: #FFFFFF;
+    border: 1px solid #D4DAE0;
+    color: #3A4147;
+}
+QPushButton#btnReturn:hover {
+    background: #F1F4F7;
+    border-color: #C7CDD3;
+}
+QPushButton#btnReturn:pressed {
+    background: #E2E6EB;
+    border-color: #B9C0C7;
+}
+QPushButton#btnReturn:disabled {
+    color: #9AA4AF;
+    background: #F6F7F9;
+    border-color: #E2E6EB;
+}

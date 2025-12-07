@@ -17,9 +17,6 @@ InspectorPanel::InspectorPanel(QWidget* parent)
 	ui.comboCollision->addItem("collidable");
 	ui.comboCollision->addItem("one-way");
 
-	ui.buttonMore->setFlat(true);
-	ui.buttonAddTag->setFlat(true);
-
 	ui.tableCustomData->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 	ui.tableCustomData->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 

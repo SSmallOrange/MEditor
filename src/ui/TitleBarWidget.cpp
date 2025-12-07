@@ -1,42 +1,18 @@
 ﻿#include "TitleBarWidget.h"
 
-#include <QPainter>
 #include <QMouseEvent>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QPushButton>
 
 TitleBarWidget::TitleBarWidget(QWidget* parent)
 	: QWidget(parent)
 {
 	setObjectName("TitleBarWidget");
-	ui.setupUi(this);
 	setAttribute(Qt::WA_StyledBackground, true);
-
-// 	layout->addWidget(m_titleLabel);
-// 	layout->addStretch();
-// 	layout->addWidget(m_closeButton);
+	ui.setupUi(this);
 
 	QObject::connect(ui.btnClose, &QPushButton::clicked, this, [this]() {
 		if (auto w = window())
 			w->close();
 		});
-}
-
-void TitleBarWidget::paintEvent(QPaintEvent* event)
-{
-	Q_UNUSED(event);
-	QPainter p(this);
-
-	// 更明显一点的浅色渐变
-	QLinearGradient g(rect().topLeft(), rect().bottomLeft());
-	g.setColorAt(0.0, QColor(252, 253, 255));
-	g.setColorAt(1.0, QColor(230, 233, 242));
-	p.fillRect(rect(), g);
-
-	// 底部细分割线
-	p.setPen(QColor(200, 203, 215));
-	p.drawLine(rect().bottomLeft(), rect().bottomRight());
 }
 
 void TitleBarWidget::mousePressEvent(QMouseEvent* event)

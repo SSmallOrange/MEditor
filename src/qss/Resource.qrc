@@ -4,5 +4,21 @@
         <file>TilesetsPanel/TilesetsPanel.qss</file>
         <file>mac_light.qss</file>
         <file>InspectorPanel/InspectorPanel.qss</file>
+        <file>SpriteSliceEditor/SpriteSliceEditor.qss</file>
+        <file>mac_dark.qss</file>
+        <file>TilesetsPanel/TilesetsPanel_dark.qss</file>
+        <file>SpriteSliceEditor/SpriteSliceEditor_dark.qss</file>
+        <file>InspectorPanel/InspectorPanel_dark.qss</file>
+        <file>SpriteSliceEditor/Return.png</file>
+        <file>import.png</file>
+        <file>save.png</file>
+        <file>close.png</file>
+        <file>minimize.png</file>
+        <file>restart.png</file>
+        <file>TilesetsPanel/TilesetPanelIcon.png</file>
+        <file>TilesetsPanel/add.png</file>
+        <file>TilesetsPanel/search.png</file>
+        <file>TilesetsPanel/collapse.png</file>
+        <file>InspectorPanel/inspectorIcon.png</file>
     </qresource>
 </RCC>

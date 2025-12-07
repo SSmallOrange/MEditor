@@ -44,7 +44,7 @@ void TilesetBlockWidget::connectSignals()
 		const int cols = ui.tableTiles->columnCount();
 		const int index = item->row() * cols + item->column();
 		emit tileSelected(m_tilesetId, index);
-		});
+	});
 
 	// 折叠
 	connect(ui.buttonCollapse, &QToolButton::toggled, this, [this](bool checked) {
@@ -54,10 +54,10 @@ void TilesetBlockWidget::connectSignals()
 		style()->unpolish(this);
 		style()->polish(this);
 		emit collapsedChanged(m_tilesetId, checked);
-		});
+	});
 
 	// 删除
 	connect(ui.buttonRemove, &QToolButton::clicked, this, [this]() {
 		emit removeRequested(m_tilesetId);
-		});
+	});
 }

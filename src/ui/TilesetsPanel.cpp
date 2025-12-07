@@ -2,13 +2,19 @@
 #include "TilesetsPanel.h"
 #include "TilesetBlockWidget.h"
 
+#include "SpriteSliceEditor/SpriteSliceEditorWidget.h"
+
 TilesetsPanel::TilesetsPanel(QWidget* parent)
 	: QWidget(parent)
 {
-	setObjectName("TilesetsPanel");
 	setAttribute(Qt::WA_StyledBackground, true);
 	ui.setupUi(this);
 	LOAD_QSS(":/TilesetsPanel/TilesetsPanel.qss");
+
+	auto icon = QIcon(":/TilesetsPanel/search.png");
+	auto act = ui.editSearch->addAction(icon, QLineEdit::LeadingPosition);
+	ui.editSearch->setClearButtonEnabled(true);
+
 	connectSignals();
 }
 
@@ -16,6 +22,7 @@ void TilesetsPanel::connectSignals()
 {
 	connect(ui.editSearch, &QLineEdit::textChanged, this, &TilesetsPanel::searchTextChanged);
 	connect(ui.buttonAddTileset, &QToolButton::clicked, this, &TilesetsPanel::onAddTileset);
+
 }
 
 void TilesetsPanel::insertTilesetWidget(TilesetBlockWidget* w)

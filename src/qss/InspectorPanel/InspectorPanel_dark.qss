@@ -1,57 +1,60 @@
+/* InspectorPanel_dark.qss */
 /************************************************
- * inspectorPanel 容器：统一为 TilesetsPanel 风格
+ * inspectorPanel 统一为 TilesetsPanel 
  ***********************************************/
 #inspectorPanel {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255,255,255,245),
-        stop:1 rgba(245,247,251,240));
+        stop:0 rgba(0,0,0,245),
+        stop:1 rgba(106,137,199,240));
     border-radius: 10px;
-    border: 1px solid #D8DFE7;
+    border: 1px solid #181F27;
     padding: 6px;
     font-family: "Segoe UI","Microsoft YaHei";
     font-size: 12px;
-    color: #2E3439;
+    color: #C6CCD1;
 }
 
 /************************************************
- * Header 
+ * Header 钮More 龋统一钮
  ***********************************************/
-QLabel#labelInspectorIcon {
-    min-width: 20px;
-    min-height: 20px;
-
-    qproperty-pixmap: url(:/InspectorPanel/inspectorIcon.png);
-    qproperty-scaledContents: 1;
-    qproperty-alignment: AlignCenter;
-    background: rgba(255,255,255,255);
+#inspectorPanel QPushButton#buttonMore {
+    min-width: 24px;
+    min-height: 24px;
+    border-radius: 6px;
+    background: rgba(0,0,0,245);
+    border: 1px solid #20272F;
+    color: #B8BFC5;
+    padding: 0;
 }
+#inspectorPanel QPushButton#buttonMore:hover { background: #7997B5; }
+#inspectorPanel QPushButton#buttonMore:pressed { background: #161C22; }
 
 /************************************************
- * Section 卡片（selection/transform/tags/customData）
+ * Section 片selection/transform/tags/customData
  ***********************************************/
 #inspectorPanel QWidget#selectionWidget,
 #inspectorPanel QWidget#transformWidget,
 #inspectorPanel QWidget#tagsWidget,
 #inspectorPanel QWidget#customDataWidget {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0   rgba(255,255,255,0.985),
-        stop:0.5 rgba(250,252,254,0.985),
-        stop:1 rgba(245,247,251,0.985));
-    border: 1px solid #D4DEE8;
+        stop:0   rgba(0,0,0,0.985),
+        stop:0.5 rgba(81,153,224,0.985),
+        stop:1 rgba(106,137,199,0.985));
+    border: 1px solid #7496B7;
     border-radius: 10px;
     padding: 8px;
     font-family: "Segoe UI","Microsoft YaHei";
     font-size: 12px;
-    color: #2E3439;
+    color: #C6CCD1;
 }
 
 /************************************************
- * Tags 区域按钮（+Tag）
+ * Tags 钮+Tag
  ***********************************************/
 #inspectorPanel QPushButton#buttonAddTag {
     background: transparent;
     border: none;
-    color: #5a5f6b;
+    color: #9499A5;
     padding: 2px 6px;
     border-radius: 6px;
 }
@@ -59,24 +62,24 @@ QLabel#labelInspectorIcon {
 #inspectorPanel QPushButton#buttonAddTag:pressed { background: rgba(0,0,0,0.08); }
 
 /************************************************
- * Custom Data 表格
+ * Custom Data 
  ***********************************************/
 #inspectorPanel QTableWidget#tableCustomData {
-    background: rgba(255,255,255,245);
-    border: 1px solid #D4DEE8;
+    background: rgba(0,0,0,245);
+    border: 1px solid #7496B7;
     border-radius: 8px;
-    gridline-color: #E6EAf1;
+    gridline-color: #788FB6;
 }
 #inspectorPanel QTableWidget#tableCustomData QHeaderView::section {
-    background: #F1F4F9;
-    color: #555;
+    background: #6D8DC3;
+    color: #AAAAAA;
     padding: 4px 6px;
     border: none;
-    border-right: 1px solid #E0E6EE;
+    border-right: 1px solid #7792B7;
     font-weight: 500;
 }
 #inspectorPanel QTableWidget#tableCustomData QTableView::item { padding: 2px 4px; }
 #inspectorPanel QTableWidget#tableCustomData QTableView::item:selected {
-    background: #e4ebff;
-    color: #222222;
+    background: #3066FF;
+    color: #DDDDDD;
 }

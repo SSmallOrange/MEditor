@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "ui_MainWindow.h"
 #include "MapViewWidget.h"
 #include "TitleBarWidget.h"
 #include "InspectorPanel.h"
@@ -18,9 +19,10 @@
 
 MainWindow::MainWindow(AppContext* ctx, QWidget* parent)
 	: QMainWindow(parent)
+	, ui(new Ui::MainWindow)
 	, m_ctx(ctx)
 {
-	ui.setupUi(this);
+	ui->setupUi(this);
 
 	// 无边框窗口（去掉系统标题栏）
 	setWindowFlag(Qt::FramelessWindowHint, true);
@@ -31,12 +33,12 @@ MainWindow::MainWindow(AppContext* ctx, QWidget* parent)
 
 	// 默认新建一张地图
 	m_ctx->documentManager.newDefaultDocument();
-	ui.mapViewWidget->update();
+	ui->mapViewWidget->update();
 }
 
 void MainWindow::SetupUi()
 {
-	ui.mapViewWidget->SetContext(m_ctx);
+	ui->mapViewWidget->SetContext(m_ctx);
 }
 
 void MainWindow::SetupStatusBar()
@@ -46,20 +48,35 @@ void MainWindow::SetupStatusBar()
 void MainWindow::SetupConnections()
 {
 	QObject::connect(&m_ctx->documentManager, &DocumentManager::documentChanged,
-		ui.mapViewWidget, QOverload<>::of(&MapViewWidget::update));
+		ui->mapViewWidget, QOverload<>::of(&MapViewWidget::update));
 
 	auto newShortcut = new QShortcut(QKeySequence::New, this);
 	QObject::connect(newShortcut, &QShortcut::activated, this, [this]() {
 		OnNewMap();
-		});
+	});
+
+	connect(ui->TilesetsPanelWidget, &TilesetsPanel::addTilesetRequested, this, &MainWindow::SlotSwitchSpriteSliceWidget);
+	connect(ui->spriteSliceEditorWidget, &SpriteSliceEditorWidget::SignalReturnToMainPanel, this, &MainWindow::SlotSwitchMainWidget);
 }
 
 void MainWindow::OnNewMap()
 {
 	m_ctx->documentManager.newDefaultDocument();
-	if (ui.label)
-		ui.label->setText(QStringLiteral("New map created"));
-	if (ui.mapViewWidget)
-		ui.mapViewWidget->update();
+	if (ui->label)
+		ui->label->setText(QStringLiteral("New map created"));
+	if (ui->mapViewWidget)
+		ui->mapViewWidget->update();
+}
+
+// ---------------------  SLOT  ---------------------
+
+void MainWindow::SlotSwitchSpriteSliceWidget()
+{
+	ui->stackedWidget->setCurrentWidget(ui->page_2);
+}
+
+void MainWindow::SlotSwitchMainWidget()
+{
+	ui->stackedWidget->setCurrentWidget(ui->page);
 }
 

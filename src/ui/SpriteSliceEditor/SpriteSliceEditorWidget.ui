@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1220</width>
-    <height>813</height>
+    <width>1226</width>
+    <height>826</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -104,7 +104,7 @@
           <x>0</x>
           <y>0</y>
           <width>306</width>
-          <height>528</height>
+          <height>541</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -444,7 +444,7 @@
         <item>
          <layout class="QVBoxLayout" name="centerVerticalLayout">
           <item>
-           <widget class="QGraphicsView" name="graphicsView">
+           <widget class="SpriteSliceGraphicsView" name="graphicsView">
             <property name="renderHints">
              <set>QPainter::RenderHint::Antialiasing|QPainter::RenderHint::SmoothPixmapTransform</set>
             </property>
@@ -529,7 +529,7 @@
           <x>0</x>
           <y>0</y>
           <width>296</width>
-          <height>528</height>
+          <height>541</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1084,6 +1084,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>SpriteSliceGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>SpriteSliceEditor/SpriteSliceGraphicsView.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -25,11 +25,16 @@ public:
 	QVector<SpriteSlice> getAllSlicesFromTable() const;
 	SpriteSlice getSliceFromTable(int row) const;
 
+	// 获取当前完整的精灵图集数据
+	SpriteSheetData getSpriteSheetData() const;
+
 protected:
 	bool eventFilter(QObject* watched, QEvent* event) override;
 
 signals:
 	void SignalReturnToMainPanel();
+	// 精灵图保存
+	void SignalSpriteSheetConfirmed(const SpriteSheetData& data);
 
 private slots:
 	// 精灵图管理
@@ -64,6 +69,9 @@ private slots:
 
 	// 点击画布选中切片
 	void onGraphicsViewClicked(const QPointF& scenePos);
+
+	// 数据导出
+	void onOkButtonClicked();
 
 private:
 	void setupConnections();

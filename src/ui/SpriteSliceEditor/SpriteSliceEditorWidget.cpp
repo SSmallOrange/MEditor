@@ -1,6 +1,7 @@
 #include "SpriteSliceEditorWidget.h"
 #include "ui_SpriteSliceEditorWidget.h"
 #include "ui/Common.h"
+#include "core/SpriteSliceDefine.h"
 
 #include <QMouseEvent>
 #include <QFileDialog>
@@ -172,6 +173,68 @@ void SpriteSliceEditorWidget::setupConnections()
 
 	// 点击画布选中切片
 	connect(m_graphicsView, &SpriteSliceGraphicsView::clickedAt, this, &SpriteSliceEditorWidget::onGraphicsViewClicked);
+
+	// 确认按钮
+	connect(ui->okButton, &QPushButton::clicked, this, &SpriteSliceEditorWidget::onOkButtonClicked);
+}
+
+// ============== 确认按钮 ==============
+void SpriteSliceEditorWidget::onOkButtonClicked()
+{
+	// 获取完整的精灵图集数据
+	SpriteSheetData data = getSpriteSheetData();
+
+	// 验证数据有效性
+	if (!data.isValid())
+	{
+		QMessageBox::warning(this, QStringLiteral("警告"),
+			QStringLiteral("无法导出：请确保已加载精灵图并生成切片"));
+		return;
+	}
+
+	qDebug() << "=== SpriteSheet Export ===";
+	qDebug() << "File:" << data.fileName;
+	qDebug() << "Path:" << data.filePath;
+	qDebug() << "Image Size:" << data.imageWidth << "x" << data.imageHeight;
+	qDebug() << "Slice Count:" << data.sliceCount();
+
+	for (int i = 0; i < data.slices.size(); ++i)
+	{
+		const auto& slice = data.slices[i];
+		int texY = slice.textureY(data.imageHeight);
+		qDebug() << QString("  [%1] %2: (%3,%4) %5x%6 group=%7 tags=%8 collision=%9 anchor=(%10,%11)")
+			.arg(i)
+			.arg(slice.name)
+			.arg(slice.x).arg(texY)
+			.arg(slice.width).arg(slice.height)
+			.arg(slice.group)
+			.arg(slice.tags)
+			.arg(slice.isCollision)
+			.arg(slice.anchor.x()).arg(slice.anchor.y());
+	}
+
+	// 发送信号
+	emit SignalSpriteSheetConfirmed(data);
+
+	QMessageBox::information(this, QStringLiteral("成功"),
+		QStringLiteral("已导出 %1 个切片").arg(data.sliceCount()));
+}
+
+SpriteSheetData SpriteSliceEditorWidget::getSpriteSheetData() const
+{
+	SpriteSheetData data;
+
+	// 填充精灵图信息
+	data.filePath = m_currentFilePath;
+	data.fileName = QFileInfo(m_currentFilePath).fileName();
+	data.pixmap = m_currentPixmap;
+	data.imageWidth = m_currentPixmap.width();
+	data.imageHeight = m_currentPixmap.height();
+
+	// 从表格获取所有切片数据（确保是最新的）
+	data.slices = getAllSlicesFromTable();
+
+	return data;
 }
 
 // ============== 模式切换 ==============
@@ -212,7 +275,6 @@ void SpriteSliceEditorWidget::onGraphicsViewClicked(const QPointF& scenePos)
 
 int SpriteSliceEditorWidget::findSliceAtPoint(const QPointF& point) const
 {
-	// 从后往前遍历（后添加的切片在上层，优先选中）
 	for (int i = m_slices.size() - 1; i >= 0; --i)
 	{
 		const SpriteSlice& slice = m_slices[i];
@@ -663,7 +725,6 @@ void SpriteSliceEditorWidget::updateSliceInTable(int row, const SpriteSlice& sli
 	if (row < 0 || row >= ui->sliceTableWidget->rowCount())
 		return;
 
-	// 预览图
 	QPixmap slicePixmap = m_currentPixmap.copy(slice.x, slice.y, slice.width, slice.height);
 	QPixmap thumbnail = slicePixmap.scaled(48, 48, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
@@ -675,7 +736,6 @@ void SpriteSliceEditorWidget::updateSliceInTable(int row, const SpriteSlice& sli
 	}
 	previewLabel->setPixmap(thumbnail);
 
-	// 辅助函数：设置或创建 item，并存储所有数据到 UserRole
 	auto getOrCreateItem = [this, row](int col) -> QTableWidgetItem* {
 		auto* item = ui->sliceTableWidget->item(row, col);
 		if (!item) {
@@ -683,15 +743,16 @@ void SpriteSliceEditorWidget::updateSliceInTable(int row, const SpriteSlice& sli
 			ui->sliceTableWidget->setItem(row, col, item);
 		}
 		return item;
-		};
+	};
 
-	// 名称列 - 存储所有数据
+	int textureY = slice.textureY(m_currentPixmap.height());
+
 	auto* nameItem = getOrCreateItem(SliceTableColumn::Name);
 	nameItem->setText(slice.name);
 	nameItem->setData(SliceTableRole::SliceId, slice.id);
 	nameItem->setData(SliceTableRole::Name, slice.name);
 	nameItem->setData(SliceTableRole::PosX, slice.x);
-	nameItem->setData(SliceTableRole::PosY, slice.y);
+	nameItem->setData(SliceTableRole::PosY, textureY);
 	nameItem->setData(SliceTableRole::Width, slice.width);
 	nameItem->setData(SliceTableRole::Height, slice.height);
 	nameItem->setData(SliceTableRole::Group, slice.group);
@@ -700,15 +761,15 @@ void SpriteSliceEditorWidget::updateSliceInTable(int row, const SpriteSlice& sli
 	nameItem->setData(SliceTableRole::IsDecorationOnly, slice.isDecorationOnly);
 	nameItem->setData(SliceTableRole::AnchorX, slice.anchor.x());
 	nameItem->setData(SliceTableRole::AnchorY, slice.anchor.y());
+	nameItem->setData(SliceTableRole::ImageHeight, m_currentPixmap.height());
 	nameItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
 
-	// 其他显示列
 	auto setDisplayItem = [&getOrCreateItem](int col, const QString& text, bool center = false) {
 		auto* item = getOrCreateItem(col);
 		item->setText(text);
 		if (center) item->setTextAlignment(Qt::AlignCenter);
 		item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-		};
+	};
 
 	setDisplayItem(SliceTableColumn::X, QString::number(slice.x), true);
 	setDisplayItem(SliceTableColumn::Y, QString::number(slice.y), true);
@@ -812,12 +873,13 @@ void SpriteSliceEditorWidget::loadSliceToInspector(int sliceIndex)
 	m_updatingInspector = true;
 
 	const SpriteSlice& slice = m_slices[sliceIndex];
+	int imageHeight = m_currentPixmap.height();
 
 	ui->sliceNameLineEdit->setText(slice.name);
 	ui->sliceIdLineEdit->setText(slice.id.toString(QUuid::WithoutBraces).left(8));
 	ui->sliceIndexSpinBox->setValue(sliceIndex);
 	ui->sliceXSpinBox->setValue(slice.x);
-	ui->sliceYSpinBox->setValue(slice.y);
+	ui->sliceYSpinBox->setValue(slice.textureY(imageHeight));
 	ui->sliceWidthSpinBox->setValue(slice.width);
 	ui->sliceHeightSpinBox->setValue(slice.height);
 
@@ -888,7 +950,6 @@ void SpriteSliceEditorWidget::onApplySliceClicked()
 
 	SpriteSlice& slice = m_slices[m_currentSliceIndex];
 
-	// 从控件读取值并更新到内存数据
 	slice.name = ui->sliceNameLineEdit->text();
 	slice.group = ui->groupComboBox->currentText();
 	slice.tags = ui->tagsLineEdit->text();

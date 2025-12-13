@@ -119,11 +119,16 @@ QWidget#widget {
  * 中心区域：MapView + InspectorPanel
  ***********************************************/
 
-/* 地图视图区（你的 MapViewWidget，objectName 通常叫 mapViewWidget） */
 QWidget#mapViewWidget {
     background: #f9fafc;
     border-radius: 12px;
     border: 1px solid rgba(0,0,0,0.06);
+}
+
+QWidget#mapViewButtomWidget {
+    background: rgba(255,255,255,245);
+    border-radius: 10px;
+    border: 1px solid #D8DFE7;
 }
 
 /************************************************
@@ -166,19 +171,16 @@ QScrollBar::sub-line:vertical {
  ***********************************************/
 QLineEdit,
 QSpinBox,
-QDoubleSpinBox,
-QComboBox {
+QDoubleSpinBox {
     background: rgba(255,255,255,245);
     border: 1px solid #d0d4e5;
     border-radius: 6px;
-    padding: 3px 6px;
     color: #222222;
 }
 
 QLineEdit:focus,
 QSpinBox:focus,
-QDoubleSpinBox:focus,
-QComboBox:focus {
+QDoubleSpinBox:focus {
     border: 1px solid #4c8dff;
     background: #ffffff;
 }
@@ -205,7 +207,7 @@ QComboBox {
     background: rgba(255,255,255,245);
     border: 1px solid #C8D0DA;       /* 边框更清晰 */
     border-radius: 8px;               /* 圆角更明显 */
-    padding: 3px 28px 3px 8px;        /* 右侧为下拉箭头留空间 */
+    padding: 3px 18px 3px 8px;        /* 右侧为下拉箭头留空间 */
     color: #222222;
 }
 

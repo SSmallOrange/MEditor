@@ -1,178 +1,775 @@
-// src/ui/MapViewWidget.cpp
 #include "MapViewWidget.h"
+#include "MapTileItem.h"
 #include "app/AppContext.h"
 #include "app/DocumentManager.h"
-#include "core/MapDocument.h"
+#include "core/TileDragData.h"
 
-#include <QPainter>
-#include <QPaintEvent>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QKeyEvent>
+#include <QScrollBar>
+#include <QtMath>
 
 MapViewWidget::MapViewWidget(QWidget* parent)
-	: QWidget(parent), m_ctx(nullptr)
+	: QGraphicsView(parent)
+	, m_ctx(nullptr)
 {
+	setObjectName("mapViewWidget");
 	setAutoFillBackground(false);
 	setMouseTracking(true);
-	setFocusPolicy(Qt::ClickFocus);   // 点击后能接收空格按键
+	setFocusPolicy(Qt::ClickFocus);
+
+	// 启用拖放
+	setAcceptDrops(true);
+
+	// 设置渲染选项
+	setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+	setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+	setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+	setResizeAnchor(QGraphicsView::AnchorViewCenter);
+
+	// 隐藏滚动条
+	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+	setupScene();
 }
 
-void MapViewWidget::paintEvent(QPaintEvent* event)
+MapViewWidget::~MapViewWidget()
 {
-	Q_UNUSED(event);
+}
 
-	QPainter p(this);
-	p.setRenderHint(QPainter::Antialiasing, false);
+void MapViewWidget::setupScene()
+{
+	m_scene = new QGraphicsScene(this);
+	setScene(m_scene);
 
-	p.fillRect(rect(), QColor(245, 246, 248));
+	// 设置背景色
+	m_scene->setBackgroundBrush(QBrush(QColor(249, 250, 252)));
+
+	// 创建高亮矩形（初始隐藏）
+	m_dropHighlight = new QGraphicsRectItem();
+	m_dropHighlight->setPen(QPen(QColor(80, 140, 255), 2));
+	m_dropHighlight->setBrush(QBrush(QColor(80, 140, 255, 60)));
+	m_dropHighlight->setZValue(1000);
+	m_dropHighlight->setVisible(false);
+	m_scene->addItem(m_dropHighlight);
+
+	// 初始化网格
+	drawGrid();
+}
+
+void MapViewWidget::updateMap()
+{
+	if (!m_ctx)
+		return;
 
 	const MapDocument* doc = m_ctx->documentManager.document();
-	if (!doc) {
-		p.setPen(QColor(150, 150, 150));
-		p.drawText(rect(), Qt::AlignCenter, QStringLiteral("No map loaded"));
-		return;
-	}
-
-	const int tileW = doc->tileWidth;
-	const int tileH = doc->tileHeight;
-
-	QRect gridArea = rect().adjusted(kMargin, kMargin, -kMargin, -kMargin);
-	if (gridArea.width() <= 0 || gridArea.height() <= 0)
+	if (!doc)
 		return;
 
-	// ---- 画网格外框（可选）----
-	p.setPen(QColor(190, 190, 195));
-	p.drawRect(gridArea);
+	// 更新地图参数
+	m_tileWidth = doc->tileWidth;
+	m_tileHeight = doc->tileHeight;
+	m_mapWidth = doc->width;
+	m_mapHeight = doc->height;
 
-	// ---- 画平移网格线 ----
-	p.setPen(QColor(220, 220, 225));
+	// 重绘网格
+	drawGrid();
 
-	const int originX = gridArea.left() + m_viewOffset.x();
-	const int originY = gridArea.top() + m_viewOffset.y();
+	// 设置场景大小
+	m_scene->setSceneRect(0, 0, m_mapWidth * m_tileWidth, m_mapHeight * m_tileHeight);
 
-	// 垂直线
-	int firstCol = static_cast<int>(std::floor((gridArea.left() - originX) / double(tileW)));
-	int lastCol = static_cast<int>(std::floor((gridArea.right() - originX) / double(tileW)));
-	for (int col = firstCol; col <= lastCol; ++col) {
-		int x = originX + col * tileW;
-		p.drawLine(x, gridArea.top(), x, gridArea.bottom());
-	}
+	// 发送信号通知 UI 更新
+	emit gridSizeChanged(m_tileWidth, m_tileHeight);
+	emit mapSizeChanged(m_mapWidth, m_mapHeight);
+}
 
-	// 水平线
-	int firstRow = static_cast<int>(std::floor((gridArea.top() - originY) / double(tileH)));
-	int lastRow = static_cast<int>(std::floor((gridArea.bottom() - originY) / double(tileH)));
-	for (int row = firstRow; row <= lastRow; ++row) {
-		int y = originY + row * tileH;
-		p.drawLine(gridArea.left(), y, gridArea.right(), y);
-	}
+void MapViewWidget::drawGrid()
+{
+	clearGrid();
 
-	// ---- 选中格子及四周高亮 ----
-	if (m_selectedTile.x() >= 0 && m_selectedTile.y() >= 0) {
-		auto drawCell = [&](const QPoint& tile,
-			const QColor& fill,
-			const QColor& border,
-			int borderWidth)
-			{
-				if (tile.x() < 0 || tile.y() < 0 ||
-					tile.x() >= doc->width || tile.y() >= doc->height)
-					return;
+	int totalWidth = m_mapWidth * m_tileWidth;
+	int totalHeight = m_mapHeight * m_tileHeight;
 
-				QRect r = TileRect(tile, doc, gridArea);
-				if (!r.intersects(gridArea))
-					return;
+	if (m_gridVisible)
+	{
+		QPen gridPen(QColor(220, 220, 225), 1);
 
-				p.save();
-				p.setPen(QPen(border, borderWidth));
-				p.setBrush(fill);
-				p.drawRect(r.adjusted(1, 1, -1, -1));
-				p.restore();
-			};
+		// 垂直线
+		for (int col = 0; col <= m_mapWidth; ++col)
+		{
+			int x = col * m_tileWidth;
+			auto* line = m_scene->addLine(x, 0, x, totalHeight, gridPen);
+			line->setZValue(1);
+			m_gridLines.append(line);
+		}
 
-		// 中心格子：蓝边 + 轻微填充
-		drawCell(m_selectedTile,
-			QColor(80, 140, 255, 40),
-			QColor(80, 140, 255),
-			2);
-
-		// 四邻格子：橙色半透明填充
-		static const QPoint offsets[4] = {
-			{ 1,  0},
-			{-1,  0},
-			{ 0,  1},
-			{ 0, -1}
-		};
-		for (const QPoint& off : offsets) {
-			drawCell(m_selectedTile + off,
-				QColor(255, 180, 80, 40),
-				QColor(255, 180, 80, 150),
-				1);
+		// 水平线
+		for (int row = 0; row <= m_mapHeight; ++row)
+		{
+			int y = row * m_tileHeight;
+			auto* line = m_scene->addLine(0, y, totalWidth, y, gridPen);
+			line->setZValue(1);
+			m_gridLines.append(line);
 		}
 	}
 
-	// TODO: 将来在这里再叠加 tile 美术 / 选择框 / 拖拽预览等
+	// 外边框始终显示
+	QPen borderPen(QColor(190, 190, 195), 2);
+	auto* border = m_scene->addRect(0, 0, totalWidth, totalHeight, borderPen);
+	border->setZValue(2);
+	m_gridLines.append(reinterpret_cast<QGraphicsLineItem*>(border));
+
+	// 更新场景矩形
+	m_scene->setSceneRect(-50, -50, totalWidth + 100, totalHeight + 100);
 }
+
+void MapViewWidget::clearGrid()
+{
+	for (auto* item : m_gridLines)
+	{
+		m_scene->removeItem(item);
+		delete item;
+	}
+	m_gridLines.clear();
+}
+
+// ============== 尺寸验证 ==============
+
+bool MapViewWidget::validateTileSize(int sliceWidth, int sliceHeight) const
+{
+	// 精灵图尺寸必须是栅格尺寸的整数倍
+	if (m_tileWidth <= 0 || m_tileHeight <= 0)
+		return false;
+
+	return (sliceWidth % m_tileWidth == 0) && (sliceHeight % m_tileHeight == 0);
+}
+
+// ============== 属性设置 ==============
+
+void MapViewWidget::setGridVisible(bool visible)
+{
+	if (m_gridVisible == visible)
+		return;
+
+	m_gridVisible = visible;
+	drawGrid();
+	emit gridVisibleChanged(visible);
+}
+
+void MapViewWidget::setGridSize(int width, int height)
+{
+	if (m_tileWidth == width && m_tileHeight == height)
+		return;
+
+	m_tileWidth = width;
+	m_tileHeight = height;
+
+	// 更新 MapDocument
+	if (m_ctx)
+	{
+		MapDocument* doc = const_cast<MapDocument*>(m_ctx->documentManager.document());
+		if (doc)
+		{
+			doc->tileWidth = width;
+			doc->tileHeight = height;
+		}
+	}
+
+	drawGrid();
+	emit gridSizeChanged(width, height);
+}
+
+void MapViewWidget::setMapSize(int width, int height)
+{
+	if (m_mapWidth == width && m_mapHeight == height)
+		return;
+
+	m_mapWidth = width;
+	m_mapHeight = height;
+
+	// 更新 MapDocument
+	if (m_ctx)
+	{
+		MapDocument* doc = const_cast<MapDocument*>(m_ctx->documentManager.document());
+		if (doc)
+		{
+			doc->width = width;
+			doc->height = height;
+		}
+	}
+
+	drawGrid();
+	m_scene->setSceneRect(-50, -50, m_mapWidth * m_tileWidth + 100, m_mapHeight * m_tileHeight + 100);
+	emit mapSizeChanged(width, height);
+}
+
+void MapViewWidget::setCurrentLayer(int layer)
+{
+	if (m_currentLayer == layer)
+		return;
+
+	m_currentLayer = layer;
+
+	// 切换图层时，如果当前选中的瓦片不在新图层，则取消选中
+	if (m_selectedTile && m_selectedTile->layer() != layer)
+	{
+		clearSelection();
+	}
+
+	qDebug() << "Current layer changed to:" << layer;
+}
+
+int MapViewWidget::zoomPercent() const
+{
+	return static_cast<int>(m_currentScale * 100);
+}
+
+void MapViewWidget::setZoomPercent(int percent)
+{
+	double newScale = percent / 100.0;
+	if (qFuzzyCompare(m_currentScale, newScale))
+		return;
+
+	resetTransform();
+	m_currentScale = newScale;
+	scale(m_currentScale, m_currentScale);
+
+	emit zoomChanged(percent);
+}
+
+void MapViewWidget::applyZoom(double scaleFactor)
+{
+	m_currentScale *= scaleFactor;
+	m_currentScale = qBound(0.1, m_currentScale, 4.0);
+
+	resetTransform();
+	scale(m_currentScale, m_currentScale);
+
+	emit zoomChanged(static_cast<int>(m_currentScale * 100));
+}
+
+// ============== 选中相关 ==============
+
+void MapViewWidget::clearSelection()
+{
+	if (m_selectedTile)
+	{
+		m_selectedTile->setSelected(false);
+		m_selectedTile = nullptr;
+		emit tileDeselected();
+	}
+}
+
+void MapViewWidget::selectTile(MapTileItem* tile)
+{
+	if (m_selectedTile == tile)
+		return;
+
+	// 取消之前的选中
+	if (m_selectedTile)
+	{
+		m_selectedTile->setSelected(false);
+	}
+
+	m_selectedTile = tile;
+
+	if (tile)
+	{
+		tile->setSelected(true);
+		emit tileSelected(tile);
+		qDebug() << "Selected tile:" << tile->slice().name
+			<< "at grid:" << tile->gridX() << "," << tile->gridY()
+			<< "layer:" << tile->layer();
+	}
+	else
+	{
+		emit tileDeselected();
+	}
+}
+
+void MapViewWidget::onTileClicked(MapTileItem* tile)
+{
+	if (!tile)
+		return;
+
+	// 检查图层：只有当前图层的瓦片才能被选中
+	if (tile->layer() != m_currentLayer)
+	{
+		qDebug() << "Cannot select tile: tile layer" << tile->layer()
+			<< "!= current layer" << m_currentLayer;
+		return;
+	}
+
+	selectTile(tile);
+}
+
+void MapViewWidget::deleteSelectedTile()
+{
+	if (!m_selectedTile)
+		return;
+
+	// 从列表中移除
+	m_placedTiles.removeOne(m_selectedTile);
+
+	// 从场景中移除
+	m_scene->removeItem(m_selectedTile);
+
+	// 删除对象
+	m_selectedTile->deleteLater();
+	m_selectedTile = nullptr;
+
+	emit tileDeselected();
+
+	qDebug() << "Deleted selected tile";
+}
+
+// ============== 瓦片拖动处理 ==============
+
+void MapViewWidget::onTileDragStarted(MapTileItem* tile)
+{
+	if (!tile || tile != m_selectedTile)
+		return;
+
+	// 检查尺寸是否匹配
+	if (!validateTileSize(tile->slice().width, tile->slice().height))
+	{
+		qDebug() << "Cannot drag tile: size mismatch";
+		return;
+	}
+
+	m_tileDragging = true;
+	m_tileOriginalPos = tile->pos();
+	m_tileOriginalGridX = tile->gridX();
+	m_tileOriginalGridY = tile->gridY();
+
+	qDebug() << "Tile drag started";
+}
+
+void MapViewWidget::onTileDragFinished(MapTileItem* tile, const QPointF& scenePos)
+{
+	if (!tile || !m_tileDragging)
+	{
+		// 如果没有在拖动状态，恢复位置
+		if (tile)
+		{
+			tile->setPos(gridToScene(tile->gridX(), tile->gridY()));
+		}
+		return;
+	}
+
+	m_tileDragging = false;
+
+	// 检查尺寸是否匹配
+	if (!validateTileSize(tile->slice().width, tile->slice().height))
+	{
+		// 尺寸不匹配，恢复原位置
+		tile->setPos(m_tileOriginalPos);
+		qDebug() << "Tile drag failed: size mismatch, restoring position";
+		return;
+	}
+
+	// 计算新的网格位置
+	QPoint newGridPos = sceneToGrid(scenePos);
+
+	// 检查边界
+	int gridW = tile->gridWidth();
+	int gridH = tile->gridHeight();
+
+	if (newGridPos.x() < 0 || newGridPos.y() < 0 ||
+		newGridPos.x() + gridW > m_mapWidth || newGridPos.y() + gridH > m_mapHeight)
+	{
+		// 超出边界，恢复原位置
+		tile->setPos(m_tileOriginalPos);
+		tile->setGridPos(m_tileOriginalGridX, m_tileOriginalGridY);
+		qDebug() << "Tile drag failed: out of bounds";
+	}
+	else
+	{
+		// 放置到新位置（对齐网格）
+		tile->setGridPos(newGridPos.x(), newGridPos.y());
+		tile->setPos(gridToScene(newGridPos.x(), newGridPos.y()));
+		qDebug() << "Tile moved to grid:" << newGridPos;
+	}
+
+	clearDropHighlight();
+}
+
+void MapViewWidget::updateMoveHighlight(const QPointF& scenePos, MapTileItem* tile)
+{
+	if (!tile)
+	{
+		clearDropHighlight();
+		return;
+	}
+
+	QPoint gridPos = sceneToGrid(scenePos);
+
+	int gridW = tile->gridWidth();
+	int gridH = tile->gridHeight();
+
+	// 检查边界
+	if (gridPos.x() < 0 || gridPos.y() < 0 ||
+		gridPos.x() + gridW > m_mapWidth || gridPos.y() + gridH > m_mapHeight)
+	{
+		clearDropHighlight();
+		return;
+	}
+
+	// 清除旧的高亮
+	for (auto* rect : m_coverageHighlights)
+	{
+		m_scene->removeItem(rect);
+		delete rect;
+	}
+	m_coverageHighlights.clear();
+
+	// 绘制目标位置高亮
+	for (int dy = 0; dy < gridH; ++dy)
+	{
+		for (int dx = 0; dx < gridW; ++dx)
+		{
+			int gx = gridPos.x() + dx;
+			int gy = gridPos.y() + dy;
+
+			if (gx >= m_mapWidth || gy >= m_mapHeight)
+				continue;
+
+			QPointF topLeft = gridToScene(gx, gy);
+			auto* rect = new QGraphicsRectItem(topLeft.x(), topLeft.y(), m_tileWidth, m_tileHeight);
+
+			if (dx == 0 && dy == 0)
+			{
+				rect->setPen(QPen(QColor(100, 200, 100), 2));
+				rect->setBrush(QBrush(QColor(100, 200, 100, 60)));
+			}
+			else
+			{
+				rect->setPen(QPen(QColor(100, 200, 100), 1));
+				rect->setBrush(QBrush(QColor(100, 200, 100, 40)));
+			}
+
+			rect->setZValue(999);
+			m_scene->addItem(rect);
+			m_coverageHighlights.append(rect);
+		}
+	}
+}
+
+// ============== 拖放事件 ==============
+
+void MapViewWidget::dragEnterEvent(QDragEnterEvent* event)
+{
+	if (event->mimeData()->hasFormat(TILE_MIME_TYPE))
+	{
+		auto* tileMime = qobject_cast<const TileMimeData*>(event->mimeData());
+		if (tileMime && tileMime->tileData().isValid())
+		{
+			// 验证尺寸
+			const auto& slice = tileMime->tileData().slice;
+			if (validateTileSize(slice.width, slice.height))
+			{
+				event->acceptProposedAction();
+				return;
+			}
+		}
+	}
+	event->ignore();
+}
+
+void MapViewWidget::dragMoveEvent(QDragMoveEvent* event)
+{
+	if (!event->mimeData()->hasFormat(TILE_MIME_TYPE))
+	{
+		event->ignore();
+		return;
+	}
+
+	auto* tileMime = qobject_cast<const TileMimeData*>(event->mimeData());
+	if (!tileMime)
+	{
+		event->ignore();
+		return;
+	}
+
+	// 验证尺寸
+	const auto& slice = tileMime->tileData().slice;
+	if (!validateTileSize(slice.width, slice.height))
+	{
+		clearDropHighlight();
+		event->ignore();
+		return;
+	}
+
+	QPointF scenePos = mapToScene(event->position().toPoint());
+	updateDropHighlight(scenePos, tileMime->tileData());
+
+	event->acceptProposedAction();
+}
+
+void MapViewWidget::dragLeaveEvent(QDragLeaveEvent* event)
+{
+	Q_UNUSED(event);
+	clearDropHighlight();
+}
+
+void MapViewWidget::dropEvent(QDropEvent* event)
+{
+	if (!event->mimeData()->hasFormat(TILE_MIME_TYPE))
+	{
+		event->ignore();
+		return;
+	}
+
+	auto* tileMime = qobject_cast<const TileMimeData*>(event->mimeData());
+	if (!tileMime || !tileMime->tileData().isValid())
+	{
+		event->ignore();
+		return;
+	}
+
+	// 验证尺寸
+	const auto& slice = tileMime->tileData().slice;
+	if (!validateTileSize(slice.width, slice.height))
+	{
+		clearDropHighlight();
+		event->ignore();
+		qDebug() << "Drop rejected: tile size" << slice.width << "x" << slice.height
+			<< "doesn't match grid size" << m_tileWidth << "x" << m_tileHeight;
+		return;
+	}
+
+	QPointF scenePos = mapToScene(event->position().toPoint());
+	QPoint gridPos = sceneToGrid(scenePos);
+
+	if (gridPos.x() >= 0 && gridPos.y() >= 0 &&
+		gridPos.x() < m_mapWidth && gridPos.y() < m_mapHeight)
+	{
+		placeTile(tileMime->tileData(), gridPos);
+		event->acceptProposedAction();
+	}
+	else
+	{
+		event->ignore();
+	}
+
+	clearDropHighlight();
+}
+
+void MapViewWidget::updateDropHighlight(const QPointF& scenePos, const TileDragData& tileData)
+{
+	QPoint gridPos = sceneToGrid(scenePos);
+
+	if (gridPos.x() < 0 || gridPos.y() < 0 ||
+		gridPos.x() >= m_mapWidth || gridPos.y() >= m_mapHeight)
+	{
+		clearDropHighlight();
+		return;
+	}
+
+	int gridW = tileData.slice.width / m_tileWidth;
+	int gridH = tileData.slice.height / m_tileHeight;
+
+	for (auto* rect : m_coverageHighlights)
+	{
+		m_scene->removeItem(rect);
+		delete rect;
+	}
+	m_coverageHighlights.clear();
+
+	for (int dy = 0; dy < gridH; ++dy)
+	{
+		for (int dx = 0; dx < gridW; ++dx)
+		{
+			int gx = gridPos.x() + dx;
+			int gy = gridPos.y() + dy;
+
+			if (gx >= m_mapWidth || gy >= m_mapHeight)
+				continue;
+
+			QPointF topLeft = gridToScene(gx, gy);
+			auto* rect = new QGraphicsRectItem(topLeft.x(), topLeft.y(), m_tileWidth, m_tileHeight);
+
+			if (dx == 0 && dy == 0)
+			{
+				rect->setPen(QPen(QColor(80, 140, 255), 2));
+				rect->setBrush(QBrush(QColor(80, 140, 255, 60)));
+			}
+			else
+			{
+				rect->setPen(QPen(QColor(255, 180, 80), 1));
+				rect->setBrush(QBrush(QColor(255, 180, 80, 40)));
+			}
+
+			rect->setZValue(999);
+			m_scene->addItem(rect);
+			m_coverageHighlights.append(rect);
+		}
+	}
+
+	QPointF topLeft = gridToScene(gridPos.x(), gridPos.y());
+	m_dropHighlight->setRect(topLeft.x(), topLeft.y(),
+		gridW * m_tileWidth, gridH * m_tileHeight);
+	m_dropHighlight->setVisible(false);
+}
+
+void MapViewWidget::clearDropHighlight()
+{
+	m_dropHighlight->setVisible(false);
+
+	for (auto* rect : m_coverageHighlights)
+	{
+		m_scene->removeItem(rect);
+		delete rect;
+	}
+	m_coverageHighlights.clear();
+}
+
+QPoint MapViewWidget::sceneToGrid(const QPointF& scenePos) const
+{
+	int gridX = static_cast<int>(qFloor(scenePos.x() / m_tileWidth));
+	int gridY = static_cast<int>(qFloor(scenePos.y() / m_tileHeight));
+	return QPoint(gridX, gridY);
+}
+
+QPointF MapViewWidget::gridToScene(int gridX, int gridY) const
+{
+	return QPointF(gridX * m_tileWidth, gridY * m_tileHeight);
+}
+
+void MapViewWidget::placeTile(const TileDragData& tileData, const QPoint& gridPos)
+{
+	if (!tileData.isValid())
+		return;
+
+	// 因为已经验证过，直接用整除
+	int gridW = tileData.slice.width / m_tileWidth;
+	int gridH = tileData.slice.height / m_tileHeight;
+
+	QPixmap scaledPixmap = tileData.pixmap.scaled(
+		gridW * m_tileWidth,
+		gridH * m_tileHeight,
+		Qt::IgnoreAspectRatio,
+		Qt::SmoothTransformation
+	);
+
+	// 创建瓦片图元，传入当前图层
+	auto* tileItem = new MapTileItem(scaledPixmap, tileData.slice, gridPos.x(), gridPos.y(), m_currentLayer);
+	tileItem->setTilesetId(tileData.tilesetId);
+	tileItem->setGridSize(gridW, gridH);
+	tileItem->setPos(gridToScene(gridPos.x(), gridPos.y()));
+	tileItem->setZValue(10 + m_currentLayer);
+
+	// 连接点击和拖动信号
+	connect(tileItem, &MapTileItem::clicked, this, &MapViewWidget::onTileClicked);
+	connect(tileItem, &MapTileItem::dragStarted, this, &MapViewWidget::onTileDragStarted);
+	connect(tileItem, &MapTileItem::dragFinished, this, &MapViewWidget::onTileDragFinished);
+
+	m_scene->addItem(tileItem);
+	m_placedTiles.append(tileItem);
+
+	qDebug() << "Placed tile:" << tileData.slice.name
+		<< "at grid:" << gridPos
+		<< "size:" << gridW << "x" << gridH
+		<< "layer:" << m_currentLayer;
+}
+
+// ============== 键盘和鼠标事件 ==============
 
 void MapViewWidget::keyPressEvent(QKeyEvent* event)
 {
-	if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
+	if (event->key() == Qt::Key_Space && !event->isAutoRepeat())
+	{
 		m_spacePressed = true;
 		if (!m_panning)
 			setCursor(Qt::OpenHandCursor);
 		return;
 	}
 
-	QWidget::keyPressEvent(event);
+	// Delete 键删除选中的瓦片
+	if (event->key() == Qt::Key_Delete && m_selectedTile)
+	{
+		deleteSelectedTile();
+		return;
+	}
+
+	// Escape 键取消选中
+	if (event->key() == Qt::Key_Escape && m_selectedTile)
+	{
+		clearSelection();
+		return;
+	}
+
+	QGraphicsView::keyPressEvent(event);
 }
 
 void MapViewWidget::keyReleaseEvent(QKeyEvent* event)
 {
-	if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
+	if (event->key() == Qt::Key_Space && !event->isAutoRepeat())
+	{
 		m_spacePressed = false;
 		if (!m_panning)
-			unsetCursor();   // 恢复默认光标
+			unsetCursor();
 		return;
 	}
-
-	QWidget::keyReleaseEvent(event);
+	QGraphicsView::keyReleaseEvent(event);
 }
 
 void MapViewWidget::mousePressEvent(QMouseEvent* event)
 {
-	if (event->button() == Qt::LeftButton && m_spacePressed) {
-		// 进入拖动模式
+	if (event->button() == Qt::LeftButton && m_spacePressed)
+	{
 		m_panning = true;
 		m_lastMousePos = event->pos();
 		setCursor(Qt::ClosedHandCursor);
 		return;
 	}
 
-	if (event->button() == Qt::LeftButton && !m_spacePressed) {
-		QPoint tile = TileFromPos(event->pos());
-		if (tile.x() >= 0) {
-			m_selectedTile = tile;
-			update();           // 触发重绘，高亮更新
+	// 点击空白区域取消选中
+	if (event->button() == Qt::LeftButton && !m_spacePressed)
+	{
+		QPointF scenePos = mapToScene(event->pos());
+		QGraphicsItem* item = m_scene->itemAt(scenePos, transform());
+
+		// 如果点击的不是 MapTileItem，或者是不在当前图层的瓦片，则取消选中
+		MapTileItem* tileItem = dynamic_cast<MapTileItem*>(item);
+		if (!tileItem || tileItem->layer() != m_currentLayer)
+		{
+			clearSelection();
 		}
-		return;
 	}
 
-	QWidget::mousePressEvent(event);
+	QGraphicsView::mousePressEvent(event);
 }
 
 void MapViewWidget::mouseMoveEvent(QMouseEvent* event)
 {
-	if (m_panning) {
+	if (m_panning)
+	{
 		QPoint delta = event->pos() - m_lastMousePos;
 		m_lastMousePos = event->pos();
 
-		m_viewOffset += delta;   // 更新视图偏移
-		update();                // 触发重绘
+		horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
+		verticalScrollBar()->setValue(verticalScrollBar()->value() - delta.y());
 		return;
 	}
 
-	QWidget::mouseMoveEvent(event);
+	// 如果有瓦片在拖动，更新高亮
+	if (m_tileDragging && m_selectedTile)
+	{
+		QPointF scenePos = mapToScene(event->pos());
+		updateMoveHighlight(scenePos, m_selectedTile);
+	}
+
+	QGraphicsView::mouseMoveEvent(event);
 }
 
 void MapViewWidget::mouseReleaseEvent(QMouseEvent* event)
 {
-	if (event->button() == Qt::LeftButton && m_panning) {
+	if (event->button() == Qt::LeftButton && m_panning)
+	{
 		m_panning = false;
 		if (m_spacePressed)
 			setCursor(Qt::OpenHandCursor);
@@ -180,51 +777,18 @@ void MapViewWidget::mouseReleaseEvent(QMouseEvent* event)
 			unsetCursor();
 		return;
 	}
-
-	QWidget::mouseReleaseEvent(event);
+	QGraphicsView::mouseReleaseEvent(event);
 }
 
-QPoint MapViewWidget::TileFromPos(const QPoint& pos) const
+void MapViewWidget::wheelEvent(QWheelEvent* event)
 {
-	const MapDocument* doc = m_ctx->documentManager.document();
-	if (!doc)
-		return QPoint(-1, -1);
-
-	const int tileW = doc->tileWidth;
-	const int tileH = doc->tileHeight;
-
-	QRect gridArea = rect().adjusted(kMargin, kMargin, -kMargin, -kMargin);
-	if (!gridArea.contains(pos))
-		return QPoint(-1, -1);
-
-	const int originX = gridArea.left() + m_viewOffset.x();
-	const int originY = gridArea.top() + m_viewOffset.y();
-
-	const double localX = pos.x() - originX;
-	const double localY = pos.y() - originY;
-
-	int col = static_cast<int>(std::floor(localX / tileW));
-	int row = static_cast<int>(std::floor(localY / tileH));
-
-	if (col < 0 || row < 0 || col >= doc->width || row >= doc->height)
-		return QPoint(-1, -1);
-
-	return QPoint(col, row);
+	const double scaleFactor = 1.15;
+	if (event->angleDelta().y() > 0)
+	{
+		applyZoom(scaleFactor);
+	}
+	else
+	{
+		applyZoom(1.0 / scaleFactor);
+	}
 }
-
-QRect MapViewWidget::TileRect(const QPoint& tile,
-	const MapDocument* doc,
-	const QRect& gridArea) const
-{
-	const int tileW = doc->tileWidth;
-	const int tileH = doc->tileHeight;
-
-	const int originX = gridArea.left() + m_viewOffset.x();
-	const int originY = gridArea.top() + m_viewOffset.y();
-
-	int x = originX + tile.x() * tileW;
-	int y = originY + tile.y() * tileH;
-
-	return QRect(x, y, tileW, tileH);
-}
-

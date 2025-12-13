@@ -1,8 +1,7 @@
 ﻿#include "ui/Common.h"
 #include "TilesetsPanel.h"
 #include "TilesetBlockWidget.h"
-
-#include "SpriteSliceEditor/SpriteSliceEditorWidget.h"
+#include <QToolButton>
 
 TilesetsPanel::TilesetsPanel(QWidget* parent)
 	: QWidget(parent)
@@ -12,7 +11,7 @@ TilesetsPanel::TilesetsPanel(QWidget* parent)
 	LOAD_QSS(":/TilesetsPanel/TilesetsPanel.qss");
 
 	auto icon = QIcon(":/TilesetsPanel/search.png");
-	auto act = ui.editSearch->addAction(icon, QLineEdit::LeadingPosition);
+	ui.editSearch->addAction(icon, QLineEdit::LeadingPosition);
 	ui.editSearch->setClearButtonEnabled(true);
 
 	connectSignals();
@@ -21,18 +20,15 @@ TilesetsPanel::TilesetsPanel(QWidget* parent)
 void TilesetsPanel::connectSignals()
 {
 	connect(ui.editSearch, &QLineEdit::textChanged, this, &TilesetsPanel::searchTextChanged);
-	connect(ui.buttonAddTileset, &QToolButton::clicked, this, &TilesetsPanel::onAddTileset);
-
+	connect(ui.buttonAddTileset, &QToolButton::clicked, this, &TilesetsPanel::addTilesetRequested);
 }
 
 void TilesetsPanel::insertTilesetWidget(TilesetBlockWidget* w)
 {
-	// 插入到状态和尾部 spacer 之前（假设最后两个是 status + spacer）
-	int insertPos = ui.layoutScroll->count() - 2;
+	int insertPos = ui.layoutScroll->count() - 1;
 	if (insertPos < 0) insertPos = ui.layoutScroll->count();
 	ui.layoutScroll->insertWidget(insertPos, w);
 
-	// 连接子控件信号
 	connect(w, &TilesetBlockWidget::tileSelected, this, &TilesetsPanel::tileSelected);
 	connect(w, &TilesetBlockWidget::removeRequested, this, [this](const QString& id) {
 		removeTilesetById(id);
@@ -43,32 +39,25 @@ void TilesetsPanel::insertTilesetWidget(TilesetBlockWidget* w)
 
 void TilesetsPanel::removeTilesetById(const QString& id)
 {
-	for (int i = 0; i < ui.layoutScroll->count(); ++i)
+	if (!m_tilesetBlocks.contains(id))
+		return;
+
+	if (auto* block = m_tilesetBlocks.take(id))
 	{
-		auto* item = ui.layoutScroll->itemAt(i);
-		if (auto* w = item->widget())
-		{
-			auto* block = qobject_cast<TilesetBlockWidget*>(w);
-			if (block && block->tilesetId() == id)
-			{
-				ui.layoutScroll->takeAt(i);
-				block->deleteLater();
-				return;
-			}
-		}
+		ui.layoutScroll->removeWidget(block);
+		block->deleteLater();
 	}
 }
 
-void TilesetsPanel::onAddTileset()
+void TilesetsPanel::onSpriteSheetConfirmed(const SpriteSheetData& data)
 {
-	static int counter = 1;
-	const QString id = QString("Tileset %1").arg(counter++);
+	const QString tilesetId = data.fileName.isEmpty() ? QStringLiteral("Tileset") : data.fileName;
 	const int columns = 8;
 	const int thumbSize = 40;
-	const int demoRows = 3;
 
-	auto* w = new TilesetBlockWidget(id, columns, thumbSize, demoRows, this);
-	insertTilesetWidget(w);
+	auto* widget = new TilesetBlockWidget(tilesetId, columns, thumbSize, 1, this);
+	widget->setTilesetData(data.pixmap, data.slices, thumbSize);
 
-	emit addTilesetRequested();
+	insertTilesetWidget(widget);
+	m_tilesetBlocks.insert(tilesetId, widget);
 }

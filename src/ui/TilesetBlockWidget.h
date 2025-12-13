@@ -1,8 +1,9 @@
 #pragma once
 
 #include <QWidget>
-#include <QTableWidget>
+#include <QListWidget>
 #include "ui_TilesetBlockWidget.h"
+#include "core/SpriteSliceDefine.h"
 
 class TilesetBlockWidget : public QWidget
 {
@@ -12,25 +13,16 @@ public:
 		int columns,
 		int thumbSize,
 		int demoRows,
-		QWidget* parent = nullptr)
-		: QWidget(parent)
-		, m_tilesetId(tilesetId)
-	{
-		setAttribute(Qt::WA_StyledBackground, true);
-		ui.setupUi(this);
-		initializeTable(columns, thumbSize);
-		ui.labelTitle->setText(tilesetId);
-		populateDemo(demoRows, columns);
-		connectSignals();
-	}
+		QWidget* parent = nullptr);
 
 	QString tilesetId() const { return m_tilesetId; }
+	void setTilesetData(const QPixmap& atlas, const QVector<SpriteSlice>& slices, int thumbSize);
+	void setCollapsed(bool collapsed);
+	bool isCollapsed() const { return m_collapsed; }
 
-	// 示例填充，可替换为真实 atlas 切片逻辑
-	void populateDemo(int rows, int cols);
-
-	// 预留：真实加载图集
-	// void loadAtlas(const QImage& atlas, int tileW, int tileH);
+	// 获取指定索引的切片数据
+	SpriteSlice getSlice(int index) const;
+	QPixmap getSlicePixmap(int index) const;
 
 signals:
 	void tileSelected(const QString& tilesetId, int tileIndex);
@@ -38,10 +30,25 @@ signals:
 	void collapsedChanged(const QString& tilesetId, bool collapsed);
 
 private:
-	void initializeTable(int columns, int thumbSize);
+	void initializeList(int thumbSize);
 	void connectSignals();
+	void populateDemo(int rows, int cols, int thumbSize);
+	void updateCollapsedState();
+	void setupDragDrop();
+
+	// 拖拽事件处理
+	bool eventFilter(QObject* watched, QEvent* event) override;
+	void startDrag(QListWidgetItem* item);
 
 private:
 	Ui::TilesetBlockWidget ui;
 	QString m_tilesetId;
+	QPixmap m_atlas;
+	QVector<SpriteSlice> m_slices;
+	int m_thumbSize = 32;
+	bool m_collapsed = false;
+
+	// 拖拽相关
+	QPoint m_dragStartPos;
+	QListWidgetItem* m_dragItem = nullptr;
 };

@@ -26,7 +26,8 @@ struct SpriteSlice
 	// 转换为纹理坐标系的 Y 值（左下角为原点）
 	// imageHeight: 整张图片的高度
 	int textureY(int imageHeight) const {
-		return imageHeight - y - height;
+		// return imageHeight - y - height;
+		return y;
 	}
 };
 

@@ -792,3 +792,19 @@ void MapViewWidget::wheelEvent(QWheelEvent* event)
 		applyZoom(1.0 / scaleFactor);
 	}
 }
+
+void MapViewWidget::clearAllTiles()
+{
+	// 先清除选中
+	clearSelection();
+
+	// 删除所有瓦片
+	for (auto* tile : m_placedTiles)
+	{
+		m_scene->removeItem(tile);
+		delete tile;
+	}
+	m_placedTiles.clear();
+
+	qDebug() << "Cleared all tiles";
+}

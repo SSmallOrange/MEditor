@@ -3,6 +3,15 @@
 #include <QPoint>
 #include <QPixmap>
 
+// ============== 碰撞类型枚举 ==============
+enum class CollisionType
+{
+	None = 0,       // 无碰撞
+	Full,           // 完全碰撞
+	OneWay,         // 单向平台
+	Custom          // 自定义
+};
+
 // ============== 切片数据结构 ==============
 struct SpriteSlice
 {
@@ -17,6 +26,7 @@ struct SpriteSlice
 	bool isCollision = false;			// 是否碰撞瓦片
 	bool isDecorationOnly = false;		// 是否仅装饰
 	QPointF anchor = { 0.5, 0.5 };		// 锚点（归一化坐标 0~1）
+	CollisionType collisionType = CollisionType::None;  // 碰撞类型
 
 	// 计算锚点的像素坐标
 	QPointF anchorPixelPos() const {
@@ -83,6 +93,15 @@ namespace SliceTableRole
 
 	// 精灵图高度
 	constexpr int ImageHeight = Base + 13;
+
+	// 碰撞类型
+	constexpr int CollisionType = Base + 14;
+
+	// 图层
+	constexpr int Layer = Base + 15;
+
+	// 图集 ID
+	constexpr int TilesetId = Base + 16;
 }
 
 // 表格列索引

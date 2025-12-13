@@ -1,11 +1,13 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 #include "MapViewWidget.h"
+#include "MapTileItem.h"
 #include "TitleBarWidget.h"
 #include "InspectorPanel.h"
 
 #include "app/AppContext.h"
 #include "app/DocumentManager.h"
+#include "core/MapExporter.h"
 
 #include <QMenuBar>
 #include <QStatusBar>
@@ -16,6 +18,8 @@
 #include <QShortcut>
 #include <QKeySequence>
 #include <QGraphicsDropShadowEffect>
+#include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(AppContext* ctx, QWidget* parent)
 	: QMainWindow(parent)
@@ -71,12 +75,29 @@ void MainWindow::SetupConnections()
 		OnNewMap();
 		});
 
+	// 导出快捷键 Ctrl+E
+	auto exportShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_E), this);
+	QObject::connect(exportShortcut, &QShortcut::activated, this, &MainWindow::onExportMap);
+
 	connect(ui->TilesetsPanelWidget, &TilesetsPanel::addTilesetRequested, this, &MainWindow::SlotSwitchSpriteSliceWidget);
 	connect(ui->spriteSliceEditorWidget, &SpriteSliceEditorWidget::SignalReturnToMainPanel, this, &MainWindow::SlotSwitchMainWidget);
 	connect(ui->spriteSliceEditorWidget, &SpriteSliceEditorWidget::SignalSpriteSheetConfirmed, ui->TilesetsPanelWidget, &TilesetsPanel::onSpriteSheetConfirmed);
 
 	// 设置 MapView 控制连接
 	SetupMapViewConnections();
+
+	// 设置 Inspector 连接
+	SetupInspectorConnections();
+
+	// 设置标题栏连接
+	SetupTitleBarConnections();
+}
+
+void MainWindow::SetupTitleBarConnections()
+{
+	connect(ui->toolBarWidget, &TitleBarWidget::exportRequested, this, &MainWindow::onExportMap);
+	connect(ui->toolBarWidget, &TitleBarWidget::restartRequested, this, &MainWindow::onResetMap);
+	connect(ui->toolBarWidget, &TitleBarWidget::saveRequested, this, &MainWindow::onSaveMap);
 }
 
 void MainWindow::SetupMapViewConnections()
@@ -100,13 +121,24 @@ void MainWindow::SetupMapViewConnections()
 	// 图层选择
 	connect(ui->comboBoxLayer, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onLayerChanged);
 
-	// ========== MapViewWidget -> UI 控件（仅用于滚轮缩放时同步显示） ==========
+	// ========== MapViewWidget -> UI 控件 ==========
 	connect(ui->mapViewWidget, &MapViewWidget::zoomChanged, this, [this](int percent) {
 		ui->zoomSlider->blockSignals(true);
 		ui->zoomSlider->setValue(percent);
 		ui->zoomSlider->blockSignals(false);
 		ui->zoomLabel->setText(QString("%1%").arg(percent));
 		});
+
+	// 瓦片选中信号
+	connect(ui->mapViewWidget, &MapViewWidget::tileSelected, this, &MainWindow::onTileSelected);
+	connect(ui->mapViewWidget, &MapViewWidget::tileDeselected, this, &MainWindow::onTileDeselected);
+}
+
+void MainWindow::SetupInspectorConnections()
+{
+	// Inspector 属性变化 -> MapViewWidget
+	connect(ui->inspectorPanel, &InspectorPanel::positionChanged, this, &MainWindow::onInspectorPositionChanged);
+	connect(ui->inspectorPanel, &InspectorPanel::layerChanged, this, &MainWindow::onInspectorLayerChanged);
 }
 
 void MainWindow::InitMapViewUI()
@@ -181,13 +213,196 @@ void MainWindow::onLayerChanged(int index)
 	ui->mapViewWidget->setCurrentLayer(layer);
 }
 
+// ========== 瓦片选中相关 ==========
+
+void MainWindow::onTileSelected(MapTileItem* tile)
+{
+	if (tile)
+	{
+		ui->inspectorPanel->showTileInfo(tile);
+		ui->label->setText(QString("选中: %1 @ (%2, %3)")
+			.arg(tile->slice().name)
+			.arg(tile->gridX())
+			.arg(tile->gridY()));
+	}
+}
+
+void MainWindow::onTileDeselected()
+{
+	ui->inspectorPanel->clearInfo();
+	ui->label->setText(QStringLiteral("Ready"));
+}
+
+// ========== Inspector 属性变化 ==========
+
+void MainWindow::onInspectorPositionChanged(int x, int y)
+{
+	MapTileItem* tile = ui->mapViewWidget->selectedTile();
+	if (!tile)
+		return;
+
+	// 检查边界
+	int mapWidth = ui->mapViewWidget->mapWidth();
+	int mapHeight = ui->mapViewWidget->mapHeight();
+
+	if (x < 0 || y < 0 ||
+		x + tile->gridWidth() > mapWidth ||
+		y + tile->gridHeight() > mapHeight)
+	{
+		// 超出边界，恢复原值
+		ui->inspectorPanel->showTileInfo(tile);
+		return;
+	}
+
+	// 更新瓦片位置
+	tile->setGridPos(x, y);
+
+	int tileWidth = ui->mapViewWidget->tileWidth();
+	int tileHeight = ui->mapViewWidget->tileHeight();
+	tile->setPos(x * tileWidth, y * tileHeight);
+
+	ui->label->setText(QString("移动到: (%1, %2)").arg(x).arg(y));
+}
+
+void MainWindow::onInspectorLayerChanged(int layer)
+{
+	MapTileItem* tile = ui->mapViewWidget->selectedTile();
+	if (!tile)
+		return;
+
+	// 更新瓦片图层
+	tile->setLayer(layer);
+	tile->setZValue(10 + layer);
+
+	// 由于图层变化，需要取消选中（因为当前图层可能不匹配了）
+	int currentLayer = ui->mapViewWidget->currentLayer();
+	if (layer != currentLayer)
+	{
+		ui->mapViewWidget->clearSelection();
+	}
+
+	qDebug() << "Tile layer changed to:" << layer;
+}
+
+// ========== 标题栏按钮 ==========
+
+void MainWindow::onExportMap()
+{
+	// 获取地图文档
+	const MapDocument* doc = m_ctx->documentManager.document();
+	if (!doc)
+	{
+		QMessageBox::warning(this, QStringLiteral("导出失败"), QStringLiteral("没有可导出的地图文档"));
+		return;
+	}
+
+	// 获取所有瓦片
+	const auto& tiles = ui->mapViewWidget->placedTiles();
+	if (tiles.isEmpty())
+	{
+		QMessageBox::StandardButton reply = QMessageBox::question(
+			this,
+			QStringLiteral("确认导出"),
+			QStringLiteral("地图中没有放置任何瓦片，是否继续导出空地图？"),
+			QMessageBox::Yes | QMessageBox::No
+		);
+
+		if (reply != QMessageBox::Yes)
+			return;
+	}
+
+	// 打开文件保存对话框
+	QString defaultName = doc->name.isEmpty() ? "untitled_map" : doc->name;
+	QString filePath = QFileDialog::getSaveFileName(
+		this,
+		QStringLiteral("导出地图"),
+		defaultName + ".json",
+		QStringLiteral("JSON 文件 (*.json);;所有文件 (*.*)")
+	);
+
+	if (filePath.isEmpty())
+		return;
+
+	// 确保文件扩展名
+	if (!filePath.endsWith(".json", Qt::CaseInsensitive))
+	{
+		filePath += ".json";
+	}
+
+	// 执行导出
+	ui->label->setText(QStringLiteral("正在导出..."));
+	QApplication::processEvents();
+
+	MapExporter::ExportOptions options;
+	options.prettyPrint = true;
+
+	bool success = MapExporter::exportToJson(
+		filePath,
+		doc,
+		tiles,
+		ui->mapViewWidget->tileWidth(),
+		ui->mapViewWidget->tileHeight(),
+		options
+	);
+
+	if (success)
+	{
+		ui->label->setText(QStringLiteral("导出成功: %1").arg(filePath));
+		QMessageBox::information(
+			this,
+			QStringLiteral("导出成功"),
+			QString("地图已成功导出到:\n%1\n\n共导出 %2 个瓦片")
+			.arg(filePath)
+			.arg(tiles.size())
+		);
+	}
+	else
+	{
+		ui->label->setText(QStringLiteral("导出失败"));
+		QMessageBox::critical(
+			this,
+			QStringLiteral("导出失败"),
+			QString("导出失败: %1").arg(MapExporter::lastError())
+		);
+	}
+}
+
+void MainWindow::onResetMap()
+{
+	QMessageBox::StandardButton reply = QMessageBox::question(
+		this,
+		QStringLiteral("确认重置"),
+		QStringLiteral("确定要重置地图吗？这将清除所有已放置的瓦片。"),
+		QMessageBox::Yes | QMessageBox::No
+	);
+
+	if (reply == QMessageBox::Yes)
+	{
+		ui->mapViewWidget->clearAllTiles();
+		ui->inspectorPanel->clearInfo();
+		ui->label->setText(QStringLiteral("地图已重置"));
+	}
+}
+
+void MainWindow::onSaveMap()
+{
+	// 保存功能（暂时与导出相同，后续可实现项目文件保存）
+	onExportMap();
+}
+
 void MainWindow::OnNewMap()
 {
 	m_ctx->documentManager.newDefaultDocument();
 	if (ui->label)
 		ui->label->setText(QStringLiteral("New map created"));
 	if (ui->mapViewWidget)
+	{
+		ui->mapViewWidget->clearAllTiles();
 		ui->mapViewWidget->updateMap();
+	}
+
+	// 清空 Inspector
+	ui->inspectorPanel->clearInfo();
 }
 
 // ---------------------  SLOT  ---------------------

@@ -33,6 +33,12 @@ public:
 	// 获取当前选中的瓦片
 	MapTileItem* selectedTile() const { return m_selectedTile; }
 
+	// 获取所有已放置的瓦片
+	const QVector<MapTileItem*>& placedTiles() const { return m_placedTiles; }
+
+	// 清空所有瓦片
+	void clearAllTiles();
+
 public slots:
 	// 设置属性
 	void setGridVisible(bool visible);

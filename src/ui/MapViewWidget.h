@@ -129,6 +129,23 @@ private:
 	// 清除复制高亮
 	void clearCopyHighlight();
 
+	// ========== 角落删除相关 ==========
+	void onDeleteDragStarted(MapTileItem* tile, CornerZone corner);
+	void onDeleteDragMoved(MapTileItem* tile, const QPointF& scenePos);
+	void onDeleteDragFinished(MapTileItem* tile);
+
+	// 删除指定网格位置的瓦片
+	void deleteTileAtGrid(int gridX, int gridY);
+
+	// 获取指定网格位置的瓦片
+	MapTileItem* getTileAtGrid(int gridX, int gridY, int layer) const;
+
+	// 更新删除区域高亮
+	void updateDeleteHighlight(const QPoint& startGrid, const QPoint& endGrid);
+
+	// 清除删除高亮
+	void clearDeleteHighlight();
+
 private:
 	AppContext* m_ctx = nullptr;
 	QGraphicsScene* m_scene = nullptr;
@@ -176,4 +193,11 @@ private:
 	QPoint m_copyLastGrid;                            // 上次处理的网格位置（用于增量放置）
 	QSet<QPair<int, int>> m_copyPlacedPositions;      // 本次复制已放置的位置
 	QVector<QGraphicsRectItem*> m_copyHighlights;     // 复制区域高亮
+
+	// 删除瓦片
+	bool m_deleteDragging = false;
+	QPoint m_deleteStartGrid;                         // 删除起始网格位置
+	QPoint m_deleteLastGrid;                          // 上次处理的网格位置
+	QSet<QPair<int, int>> m_deleteRemovedPositions;   // 本次删除已移除的位置
+	QVector<QGraphicsRectItem*> m_deleteHighlights;   // 删除区域高亮
 };

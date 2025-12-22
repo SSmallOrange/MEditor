@@ -65,21 +65,36 @@ CornerZone MapTileItem::detectCornerZone(const QPointF& localPos) const
 	return CornerZone::None;
 }
 
-void MapTileItem::updateCursorForZone(CornerZone zone)
+void MapTileItem::updateCursorForZone(CornerZone zone, bool shiftPressed)
 {
-	switch (zone)
+	if (zone == CornerZone::None)
 	{
-	case CornerZone::TopLeft:
-	case CornerZone::BottomRight:
-		setCursor(Qt::SizeFDiagCursor);
-		break;
-	case CornerZone::TopRight:
-	case CornerZone::BottomLeft:
-		setCursor(Qt::SizeBDiagCursor);
-		break;
-	default:
 		unsetCursor();
-		break;
+		return;
+	}
+
+	// Shift 按下时显示禁止光标（表示删除模式）
+	if (shiftPressed)
+	{
+		setCursor(Qt::ForbiddenCursor);
+	}
+	else
+	{
+		// 普通模式显示对角箭头
+		switch (zone)
+		{
+		case CornerZone::TopLeft:
+		case CornerZone::BottomRight:
+			setCursor(Qt::SizeFDiagCursor);
+			break;
+		case CornerZone::TopRight:
+		case CornerZone::BottomLeft:
+			setCursor(Qt::SizeBDiagCursor);
+			break;
+		default:
+			unsetCursor();
+			break;
+		}
 	}
 }
 
@@ -89,7 +104,8 @@ void MapTileItem::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
 	{
 		CornerZone zone = detectCornerZone(event->pos());
 		m_currentCornerZone = zone;
-		updateCursorForZone(zone);
+		bool shiftPressed = event->modifiers() & Qt::ShiftModifier;
+		updateCursorForZone(zone, shiftPressed);
 	}
 	QGraphicsPixmapItem::hoverEnterEvent(event);
 }
@@ -99,12 +115,14 @@ void MapTileItem::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
 	if (m_selected)
 	{
 		CornerZone zone = detectCornerZone(event->pos());
+		bool shiftPressed = event->modifiers() & Qt::ShiftModifier;
+
 		if (zone != m_currentCornerZone)
 		{
 			m_currentCornerZone = zone;
-			updateCursorForZone(zone);
 			update();  // 更新绘制以显示角落高亮
 		}
+		updateCursorForZone(zone, shiftPressed);
 	}
 	QGraphicsPixmapItem::hoverMoveEvent(event);
 }
@@ -124,14 +142,26 @@ void MapTileItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 		m_dragStartPos = event->scenePos();
 		m_originalPos = pos();
 
-		// 检查是否在角落区域（用于复制拖动）
+		// 检查是否在角落区域
 		CornerZone zone = detectCornerZone(event->pos());
 		if (m_selected && zone != CornerZone::None)
 		{
-			// 开始角落复制拖动
-			m_copyDragging = true;
-			m_copyStartCorner = zone;
-			emit copyDragStarted(this, zone);
+			bool shiftPressed = event->modifiers() & Qt::ShiftModifier;
+
+			if (shiftPressed)
+			{
+				// Shift + 角落拖动 = 删除模式
+				m_deleteDragging = true;
+				m_deleteStartCorner = zone;
+				emit deleteDragStarted(this, zone);
+			}
+			else
+			{
+				// 普通角落拖动 = 复制模式
+				m_copyDragging = true;
+				m_copyStartCorner = zone;
+				emit copyDragStarted(this, zone);
+			}
 			event->accept();
 			return;
 		}
@@ -145,6 +175,14 @@ void MapTileItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 
 void MapTileItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 {
+	// 删除拖动
+	if (m_deleteDragging)
+	{
+		emit deleteDragMoved(this, event->scenePos());
+		event->accept();
+		return;
+	}
+
 	// 角落复制拖动
 	if (m_copyDragging)
 	{
@@ -184,6 +222,16 @@ void MapTileItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
 	if (event->button() == Qt::LeftButton)
 	{
+		// 删除拖动结束
+		if (m_deleteDragging)
+		{
+			m_deleteDragging = false;
+			m_deleteStartCorner = CornerZone::None;
+			emit deleteDragFinished(this);
+			event->accept();
+			return;
+		}
+
 		// 角落复制拖动结束
 		if (m_copyDragging)
 		{

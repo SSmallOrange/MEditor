@@ -66,6 +66,9 @@ public:
 	bool isCopyDragging() const { return m_copyDragging; }
 	CornerZone currentCornerZone() const { return m_currentCornerZone; }
 
+	// 角落删除相关
+	bool isDeleteDragging() const { return m_deleteDragging; }
+
 	// 获取原始 pixmap（用于复制）
 	QPixmap originalPixmap() const { return pixmap(); }
 
@@ -79,6 +82,11 @@ signals:
 	void copyDragStarted(MapTileItem* item, CornerZone corner);
 	void copyDragMoved(MapTileItem* item, const QPointF& scenePos);
 	void copyDragFinished(MapTileItem* item);
+
+	// 角落删除信号（Shift + 拖拽）
+	void deleteDragStarted(MapTileItem* item, CornerZone corner);
+	void deleteDragMoved(MapTileItem* item, const QPointF& scenePos);
+	void deleteDragFinished(MapTileItem* item);
 
 protected:
 	void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
@@ -94,7 +102,7 @@ private:
 	CornerZone detectCornerZone(const QPointF& localPos) const;
 
 	// 更新鼠标光标
-	void updateCursorForZone(CornerZone zone);
+	void updateCursorForZone(CornerZone zone, bool shiftPressed = false);
 
 private:
 	SpriteSlice m_slice;
@@ -121,4 +129,8 @@ private:
 	CornerZone m_copyStartCorner = CornerZone::None;
 	static constexpr qreal CORNER_HIT_SIZE = 6.0;   // 角落检测区域大小（点击判定）
 	static constexpr qreal CORNER_DRAW_SIZE = 5.0;  // 角落绘制大小（视觉显示）
+
+	// 删除
+	bool m_deleteDragging = false;
+	CornerZone m_deleteStartCorner = CornerZone::None;
 };

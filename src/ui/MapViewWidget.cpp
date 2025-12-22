@@ -459,6 +459,7 @@ void MapViewWidget::updateMoveHighlight(const QPointF& scenePos, MapTileItem* ti
 }
 
 // ============== 复制瓦片 ==============
+
 bool MapViewWidget::hasPlacedTileAt(int gridX, int gridY, int layer) const
 {
 	for (const auto* tile : m_placedTiles)
@@ -525,6 +526,9 @@ MapTileItem* MapViewWidget::copyTileToGrid(MapTileItem* sourceTile, int gridX, i
 	connect(newTile, &MapTileItem::copyDragStarted, this, &MapViewWidget::onCopyDragStarted);
 	connect(newTile, &MapTileItem::copyDragMoved, this, &MapViewWidget::onCopyDragMoved);
 	connect(newTile, &MapTileItem::copyDragFinished, this, &MapViewWidget::onCopyDragFinished);
+	connect(newTile, &MapTileItem::deleteDragStarted, this, &MapViewWidget::onDeleteDragStarted);
+	connect(newTile, &MapTileItem::deleteDragMoved, this, &MapViewWidget::onDeleteDragMoved);
+	connect(newTile, &MapTileItem::deleteDragFinished, this, &MapViewWidget::onDeleteDragFinished);
 
 	m_scene->addItem(newTile);
 	m_placedTiles.append(newTile);
@@ -654,6 +658,174 @@ void MapViewWidget::clearCopyHighlight()
 		delete rect;
 	}
 	m_copyHighlights.clear();
+}
+
+// ============== 删除瓦片 ==============
+
+MapTileItem* MapViewWidget::getTileAtGrid(int gridX, int gridY, int layer) const
+{
+	for (auto* tile : m_placedTiles)
+	{
+		if (tile->layer() != layer)
+			continue;
+
+		int tx = tile->gridX();
+		int ty = tile->gridY();
+		int tw = tile->gridWidth();
+		int th = tile->gridHeight();
+
+		if (gridX >= tx && gridX < tx + tw && gridY >= ty && gridY < ty + th)
+			return tile;
+	}
+	return nullptr;
+}
+
+void MapViewWidget::deleteTileAtGrid(int gridX, int gridY)
+{
+	MapTileItem* tile = getTileAtGrid(gridX, gridY, m_currentLayer);
+	if (!tile)
+		return;
+
+	// 如果是当前选中的瓦片，不删除（保留源瓦片）
+	if (tile == m_selectedTile)
+		return;
+
+	// 从列表中移除
+	m_placedTiles.removeOne(tile);
+
+	// 从场景中移除
+	m_scene->removeItem(tile);
+
+	// 删除对象
+	tile->deleteLater();
+
+	qDebug() << "Deleted tile at grid:" << gridX << "," << gridY;
+}
+
+void MapViewWidget::onDeleteDragStarted(MapTileItem* tile, CornerZone corner)
+{
+	if (!tile || tile != m_selectedTile)
+		return;
+
+	m_deleteDragging = true;
+	m_deleteStartGrid = QPoint(tile->gridX(), tile->gridY());
+	m_deleteLastGrid = m_deleteStartGrid;
+	m_deleteRemovedPositions.clear();
+
+	// 记录源瓦片位置（不删除源瓦片）
+	m_deleteRemovedPositions.insert(qMakePair(tile->gridX(), tile->gridY()));
+
+	qDebug() << "Delete drag started from corner:" << static_cast<int>(corner)
+		<< "at grid:" << m_deleteStartGrid;
+}
+
+void MapViewWidget::onDeleteDragMoved(MapTileItem* tile, const QPointF& scenePos)
+{
+	if (!m_deleteDragging || !tile)
+		return;
+
+	QPoint currentGrid = sceneToGrid(scenePos);
+
+	// 如果网格位置没变，不处理
+	if (currentGrid == m_deleteLastGrid)
+		return;
+
+	m_deleteLastGrid = currentGrid;
+
+	// 计算需要删除的矩形区域
+	int startX = qMin(m_deleteStartGrid.x(), currentGrid.x());
+	int startY = qMin(m_deleteStartGrid.y(), currentGrid.y());
+	int endX = qMax(m_deleteStartGrid.x(), currentGrid.x());
+	int endY = qMax(m_deleteStartGrid.y(), currentGrid.y());
+
+	// 更新高亮显示
+	updateDeleteHighlight(QPoint(startX, startY), QPoint(endX, endY));
+
+	// 动态删除瓦片：遍历矩形区域
+	for (int gy = startY; gy <= endY; ++gy)
+	{
+		for (int gx = startX; gx <= endX; ++gx)
+		{
+			QPair<int, int> pos = qMakePair(gx, gy);
+
+			// 跳过已经处理过的位置
+			if (m_deleteRemovedPositions.contains(pos))
+				continue;
+
+			// 检查边界
+			if (gx < 0 || gy < 0 || gx >= m_mapWidth || gy >= m_mapHeight)
+				continue;
+
+			// 尝试删除
+			deleteTileAtGrid(gx, gy);
+			m_deleteRemovedPositions.insert(pos);
+		}
+	}
+}
+
+void MapViewWidget::onDeleteDragFinished(MapTileItem* tile)
+{
+	Q_UNUSED(tile);
+
+	m_deleteDragging = false;
+	m_deleteRemovedPositions.clear();
+	clearDeleteHighlight();
+
+	qDebug() << "Delete drag finished";
+}
+
+void MapViewWidget::updateDeleteHighlight(const QPoint& startGrid, const QPoint& endGrid)
+{
+	clearDeleteHighlight();
+
+	// 绘制整个删除区域的高亮（红色）
+	for (int gy = startGrid.y(); gy <= endGrid.y(); ++gy)
+	{
+		for (int gx = startGrid.x(); gx <= endGrid.x(); ++gx)
+		{
+			if (gx < 0 || gy < 0 || gx >= m_mapWidth || gy >= m_mapHeight)
+				continue;
+
+			QPointF topLeft = gridToScene(gx, gy);
+			auto* rect = new QGraphicsRectItem(topLeft.x(), topLeft.y(), m_tileWidth, m_tileHeight);
+
+			// 检查是否是源瓦片位置
+			bool isSourceTile = (gx == m_deleteStartGrid.x() && gy == m_deleteStartGrid.y());
+
+			if (isSourceTile)
+			{
+				// 源瓦片位置用蓝色标记（不会被删除）
+				rect->setPen(QPen(QColor(80, 140, 255), 2));
+				rect->setBrush(QBrush(QColor(80, 140, 255, 40)));
+			}
+			else if (hasPlacedTileAt(gx, gy, m_currentLayer))
+			{
+				// 有瓦片的位置用红色标记（将被删除）
+				rect->setPen(QPen(QColor(255, 100, 100), 2));
+				rect->setBrush(QBrush(QColor(255, 100, 100, 60)));
+			}
+			else
+			{
+				// 空位置用浅红色标记
+				rect->setPen(QPen(QColor(255, 150, 150), 1));
+				rect->setBrush(QBrush(QColor(255, 150, 150, 30)));
+			}
+
+			rect->setZValue(998);
+			m_scene->addItem(rect);
+			m_deleteHighlights.append(rect);
+		}
+	}
+}
+
+void MapViewWidget::clearDeleteHighlight()
+{
+	for (auto* rect : m_deleteHighlights)
+	{
+		m_scene->removeItem(rect);
+		delete rect;
+	}
+	m_deleteHighlights.clear();
 }
 
 // ============== 拖放事件 ==============
@@ -867,6 +1039,9 @@ void MapViewWidget::placeTile(const TileDragData& tileData, const QPoint& gridPo
 	connect(tileItem, &MapTileItem::copyDragStarted, this, &MapViewWidget::onCopyDragStarted);
 	connect(tileItem, &MapTileItem::copyDragMoved, this, &MapViewWidget::onCopyDragMoved);
 	connect(tileItem, &MapTileItem::copyDragFinished, this, &MapViewWidget::onCopyDragFinished);
+	connect(tileItem, &MapTileItem::deleteDragStarted, this, &MapViewWidget::onDeleteDragStarted);
+	connect(tileItem, &MapTileItem::deleteDragMoved, this, &MapViewWidget::onDeleteDragMoved);
+	connect(tileItem, &MapTileItem::deleteDragFinished, this, &MapViewWidget::onDeleteDragFinished);
 
 	m_scene->addItem(tileItem);
 	m_placedTiles.append(tileItem);

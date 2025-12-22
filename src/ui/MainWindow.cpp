@@ -136,9 +136,12 @@ void MainWindow::SetupMapViewConnections()
 
 void MainWindow::SetupInspectorConnections()
 {
-	// Inspector 属性变化 -> MapViewWidget
+	// Inspector 属性变化 -> MapViewWidget / MapTileItem
 	connect(ui->inspectorPanel, &InspectorPanel::positionChanged, this, &MainWindow::onInspectorPositionChanged);
 	connect(ui->inspectorPanel, &InspectorPanel::layerChanged, this, &MainWindow::onInspectorLayerChanged);
+	connect(ui->inspectorPanel, &InspectorPanel::nameChanged, this, &MainWindow::onInspectorNameChanged);
+	connect(ui->inspectorPanel, &InspectorPanel::collisionTypeChanged, this, &MainWindow::onInspectorCollisionTypeChanged);
+	connect(ui->inspectorPanel, &InspectorPanel::tagsChanged, this, &MainWindow::onInspectorTagsChanged);
 }
 
 void MainWindow::InitMapViewUI()
@@ -282,6 +285,49 @@ void MainWindow::onInspectorLayerChanged(int layer)
 	}
 
 	qDebug() << "Tile layer changed to:" << layer;
+}
+
+void MainWindow::onInspectorNameChanged(const QString& name)
+{
+	MapTileItem* tile = ui->mapViewWidget->selectedTile();
+	if (!tile)
+		return;
+
+	tile->setDisplayName(name);
+	ui->label->setText(QString("名称已更新: %1").arg(name));
+	qDebug() << "Tile name changed to:" << name;
+}
+
+void MainWindow::onInspectorCollisionTypeChanged(CollisionType type)
+{
+	MapTileItem* tile = ui->mapViewWidget->selectedTile();
+	if (!tile)
+		return;
+
+	tile->setCollisionType(type);
+
+	QString typeName;
+	switch (type)
+	{
+	case CollisionType::None:    typeName = "无碰撞"; break;
+	case CollisionType::Ground:  typeName = "地面"; break;
+	case CollisionType::Trigger: typeName = "触发器"; break;
+	default: typeName = "未知"; break;
+	}
+
+	ui->label->setText(QString("碰撞类型已更新: %1").arg(typeName));
+	qDebug() << "Tile collision type changed to:" << static_cast<int>(type);
+}
+
+void MainWindow::onInspectorTagsChanged(const QString& tags)
+{
+	MapTileItem* tile = ui->mapViewWidget->selectedTile();
+	if (!tile)
+		return;
+
+	tile->setTags(tags);
+	ui->label->setText(QString("标签已更新: %1").arg(tags.isEmpty() ? "(无)" : tags));
+	qDebug() << "Tile tags changed to:" << tags;
 }
 
 // ========== 标题栏按钮 ==========

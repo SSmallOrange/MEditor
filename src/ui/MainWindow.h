@@ -1,4 +1,6 @@
 #pragma once
+#include "core/SpriteSliceDefine.h"
+
 #include <QMainWindow>
 
 class AppContext;
@@ -45,6 +47,9 @@ private slots:
 	// Inspector 属性变化
 	void onInspectorPositionChanged(int x, int y);
 	void onInspectorLayerChanged(int layer);
+	void onInspectorNameChanged(const QString& name);
+	void onInspectorCollisionTypeChanged(CollisionType type);
+	void onInspectorTagsChanged(const QString& tags);
 
 	// 标题栏按钮
 	void onExportMap();

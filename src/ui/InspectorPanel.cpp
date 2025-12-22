@@ -38,12 +38,11 @@ void InspectorPanel::initComboBoxes()
 	ui.comboLayer->addItem(QStringLiteral("图层 2 (装饰)"), 2);
 	ui.comboLayer->addItem(QStringLiteral("图层 3 (前景)"), 3);
 
-	// 碰撞类型下拉框
+	// 碰撞类型下拉框 - 只保留 None、Ground、Trigger
 	ui.comboCollision->clear();
 	ui.comboCollision->addItem(QStringLiteral("无碰撞"), static_cast<int>(CollisionType::None));
-	ui.comboCollision->addItem(QStringLiteral("完全碰撞"), static_cast<int>(CollisionType::Full));
-	ui.comboCollision->addItem(QStringLiteral("单向平台"), static_cast<int>(CollisionType::OneWay));
-	ui.comboCollision->addItem(QStringLiteral("自定义"), static_cast<int>(CollisionType::Custom));
+	ui.comboCollision->addItem(QStringLiteral("地面 (Ground)"), static_cast<int>(CollisionType::Ground));
+	ui.comboCollision->addItem(QStringLiteral("触发器 (Trigger)"), static_cast<int>(CollisionType::Trigger));
 }
 
 void InspectorPanel::setupConnections()
@@ -52,25 +51,91 @@ void InspectorPanel::setupConnections()
 	connect(ui.spinPosX, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
 		if (m_updating || !m_currentTile) return;
 		emit positionChanged(value, ui.spinPosY->value());
-		});
+	});
 
 	connect(ui.spinPosY, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
 		if (m_updating || !m_currentTile) return;
 		emit positionChanged(ui.spinPosX->value(), value);
-		});
+	});
 
 	// 图层变化
 	connect(ui.comboLayer, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
 		if (m_updating || !m_currentTile) return;
 		int layer = ui.comboLayer->itemData(index).toInt();
 		emit layerChanged(layer);
-		});
+	});
 
 	// 名称变化
 	connect(ui.editTitle, &QLineEdit::textChanged, this, [this](const QString& text) {
 		if (m_updating || !m_currentTile) return;
 		emit nameChanged(text);
-		});
+	});
+
+	// 碰撞类型变化
+	connect(ui.comboCollision, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+		if (m_updating || !m_currentTile) return;
+		int typeValue = ui.comboCollision->itemData(index).toInt();
+		CollisionType type = static_cast<CollisionType>(typeValue);
+		emit collisionTypeChanged(type);
+	});
+
+	// 标签添加按钮
+	connect(ui.buttonAddTag, &QPushButton::clicked, this, &InspectorPanel::onAddTagClicked);
+
+	// 标签列表双击删除（或使用右键菜单）
+	connect(ui.listTags, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
+		if (m_updating || !m_currentTile) return;
+		delete item;
+		updateTagsFromList();
+	});
+}
+
+void InspectorPanel::onAddTagClicked()
+{
+	if (m_updating || !m_currentTile) return;
+
+	QString newTag = ui.editNewTag->text().trimmed();
+	if (newTag.isEmpty()) return;
+
+	// 检查是否已存在
+	for (int i = 0; i < ui.listTags->count(); ++i)
+	{
+		if (ui.listTags->item(i)->text() == newTag)
+		{
+			ui.editNewTag->clear();
+			return;
+		}
+	}
+
+	// 添加到列表
+	ui.listTags->addItem(newTag);
+	ui.editNewTag->clear();
+
+	// 更新瓦片标签
+	updateTagsFromList();
+}
+
+void InspectorPanel::onRemoveTagClicked()
+{
+	if (m_updating || !m_currentTile) return;
+
+	QListWidgetItem* currentItem = ui.listTags->currentItem();
+	if (currentItem)
+	{
+		delete currentItem;
+		updateTagsFromList();
+	}
+}
+
+void InspectorPanel::updateTagsFromList()
+{
+	QStringList tagList;
+	for (int i = 0; i < ui.listTags->count(); ++i)
+	{
+		tagList.append(ui.listTags->item(i)->text());
+	}
+	QString tags = tagList.join(",");
+	emit tagsChanged(tags);
 }
 
 void InspectorPanel::blockAllSignals(bool block)
@@ -86,6 +151,8 @@ void InspectorPanel::blockAllSignals(bool block)
 	ui.editTitle->blockSignals(block);
 	ui.checkLayerVisible->blockSignals(block);
 	ui.checkLayerLocked->blockSignals(block);
+	ui.listTags->blockSignals(block);
+	ui.buttonAddTag->blockSignals(block);
 }
 
 void InspectorPanel::showTileInfo(MapTileItem* tile)
@@ -126,8 +193,8 @@ void InspectorPanel::showTileInfo(MapTileItem* tile)
 	// 瓦片 ID
 	ui.editTileId->setText(slice.id.toString(QUuid::WithoutBraces).left(8));
 
-	// 瓦片名称
-	ui.editTitle->setText(slice.name);
+	// 瓦片名称（使用可编辑的 displayName）
+	ui.editTitle->setText(tile->displayName());
 
 	// ========== 图层信息 ==========
 	int layerIndex = ui.comboLayer->findData(tile->layer());
@@ -137,8 +204,7 @@ void InspectorPanel::showTileInfo(MapTileItem* tile)
 	}
 
 	// ========== 碰撞设置 ==========
-	int collisionType = slice.isCollision ? static_cast<int>(CollisionType::Full) : static_cast<int>(CollisionType::None);
-	int collisionIndex = ui.comboCollision->findData(collisionType);
+	int collisionIndex = ui.comboCollision->findData(static_cast<int>(tile->collisionType()));
 	if (collisionIndex >= 0)
 	{
 		ui.comboCollision->setCurrentIndex(collisionIndex);
@@ -146,9 +212,10 @@ void InspectorPanel::showTileInfo(MapTileItem* tile)
 
 	// ========== 标签 ==========
 	ui.listTags->clear();
-	if (!slice.tags.isEmpty())
+	QString tags = tile->tags();
+	if (!tags.isEmpty())
 	{
-		QStringList tagList = slice.tags.split(',', Qt::SkipEmptyParts);
+		QStringList tagList = tags.split(',', Qt::SkipEmptyParts);
 		for (const QString& tag : tagList)
 		{
 			ui.listTags->addItem(tag.trimmed());

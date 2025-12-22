@@ -30,7 +30,7 @@ bool MapExporter::exportToJson(
 
 	// ========== 文件头信息 ==========
 	QJsonObject header;
-	header["version"] = "1.1";  // 版本升级，新增 slices 数组
+	header["version"] = "1.2";
 	header["generator"] = "MEditor";
 	header["exportTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
 	root["header"] = header;
@@ -41,7 +41,7 @@ bool MapExporter::exportToJson(
 	// ========== 图集引用 ==========
 	root["tilesets"] = buildTilesetReferences(tiles);
 
-	// ========== 切片数据（去重）==========
+	// ========== 切片数据 ==========
 	QMap<QString, int> sliceIdMap;  // UUID -> 数组索引
 	root["slices"] = buildSlicesArray(tiles, sliceIdMap);
 
@@ -74,7 +74,7 @@ QJsonObject MapExporter::buildMapMeta(const MapDocument* doc, int tileWidth, int
 {
 	QJsonObject map;
 
-	// 基础信息
+	// 基本信息
 	map["name"] = doc->name.isEmpty() ? "Untitled" : doc->name;
 	map["width"] = doc->width;
 	map["height"] = doc->height;
@@ -132,7 +132,7 @@ QJsonArray MapExporter::buildSlicesArray(
 		const SpriteSlice& slice = tile->slice();
 		QString sliceUuid = slice.id.toString(QUuid::WithoutBraces);
 
-		// 如果这个切片还没添加过，则添加
+		// 如果这个切片还没有添加过，才添加
 		if (!addedSlices.contains(sliceUuid))
 		{
 			addedSlices.insert(sliceUuid);
@@ -173,12 +173,6 @@ QJsonObject MapExporter::buildSliceData(const SpriteSlice& slice)
 
 	// 分组
 	sliceObj["group"] = slice.group;
-
-	// 碰撞信息
-	QJsonObject collision;
-	collision["enabled"] = slice.isCollision;
-	collision["type"] = static_cast<int>(slice.collisionType);
-	sliceObj["collision"] = collision;
 
 	// 装饰标记
 	sliceObj["decorationOnly"] = slice.isDecorationOnly;
@@ -259,10 +253,31 @@ QJsonObject MapExporter::buildTileData(MapTileItem* tile, const QMap<QString, in
 	// ========== 图集引用 ==========
 	tileObj["tilesetId"] = tile->tilesetId();
 
-	// ========== 切片引用（使用索引）==========
+	// ========== 切片引用 ==========
 	QString sliceUuid = tile->slice().id.toString(QUuid::WithoutBraces);
 	tileObj["sliceIndex"] = sliceIdMap.value(sliceUuid, -1);
-	tileObj["sliceId"] = sliceUuid;  // 保留 UUID 便于调试
+	tileObj["sliceId"] = sliceUuid;  // 保留 UUID 用于调试
+
+	// ========== 显示名称 ==========
+	tileObj["displayName"] = tile->displayName();
+
+	// ========== 碰撞信息 ==========
+	QJsonObject collision;
+	CollisionType collisionType = tile->collisionType();
+	collision["enabled"] = (collisionType != CollisionType::None);
+
+	// 导出碰撞类型字符串
+	QString collisionTypeStr;
+	switch (collisionType)
+	{
+	case CollisionType::None:    collisionTypeStr = "none"; break;
+	case CollisionType::Ground:  collisionTypeStr = "ground"; break;
+	case CollisionType::Trigger: collisionTypeStr = "trigger"; break;
+	default: collisionTypeStr = "none"; break;
+	}
+	collision["type"] = collisionTypeStr;
+	collision["typeId"] = static_cast<int>(collisionType);
+	tileObj["collision"] = collision;
 
 	// ========== 变换信息 ==========
 	QJsonObject transform;
@@ -275,13 +290,12 @@ QJsonObject MapExporter::buildTileData(MapTileItem* tile, const QMap<QString, in
 	tileObj["layer"] = tile->layer();
 	tileObj["zIndex"] = static_cast<int>(tile->zValue());
 
-	// ========== 瓦片实例特有数据 ==========
-	// 标签（每个瓦片实例可能不同）
+	// ========== 标签 ==========
 	QJsonArray tags;
-	const QString& sliceTags = tile->slice().tags;
-	if (!sliceTags.isEmpty())
+	const QString& tileTags = tile->tags();
+	if (!tileTags.isEmpty())
 	{
-		QStringList tagList = sliceTags.split(',', Qt::SkipEmptyParts);
+		QStringList tagList = tileTags.split(',', Qt::SkipEmptyParts);
 		for (const QString& tag : tagList)
 		{
 			tags.append(tag.trimmed());
@@ -289,9 +303,8 @@ QJsonObject MapExporter::buildTileData(MapTileItem* tile, const QMap<QString, in
 	}
 	tileObj["tags"] = tags;
 
-	// 自定义数据（每个瓦片实例可能不同）
+	// 自定义数据（预留位置）
 	QJsonObject customData;
-	// 预留位置，后续从 MapTileItem 读取
 	tileObj["customData"] = customData;
 
 	return tileObj;

@@ -1,12 +1,13 @@
 #pragma once
 
+#include "core/SpriteSliceDefine.h"
+
 #include <QWidget>
 #include "ui_InspectorPanel.h"
 
 class MapTileItem;
 struct SpriteSlice;
 
-// 右侧 Inspector 面板：使用 .ui 布局
 class InspectorPanel : public QWidget
 {
 	Q_OBJECT
@@ -27,11 +28,18 @@ signals:
 	void positionChanged(int x, int y);
 	void layerChanged(int layer);
 	void nameChanged(const QString& name);
+	void collisionTypeChanged(CollisionType type);
+	void tagsChanged(const QString& tags);
+
+private slots:
+	void onAddTagClicked();
+	void onRemoveTagClicked();
 
 private:
 	void setupConnections();
 	void initComboBoxes();
 	void blockAllSignals(bool block);
+	void updateTagsFromList();
 
 private:
 	Ui::InspectorPanel ui;

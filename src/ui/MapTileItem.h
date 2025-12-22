@@ -40,6 +40,18 @@ public:
 	// 拖动状态
 	bool isDragging() const { return m_dragging; }
 
+	// 碰撞类型
+	CollisionType collisionType() const { return m_collisionType; }
+	void setCollisionType(CollisionType type) { m_collisionType = type; }
+
+	// 标签
+	QString tags() const { return m_tags; }
+	void setTags(const QString& tags) { m_tags = tags; }
+
+	// 名称（可修改的显示名称）
+	QString displayName() const { return m_displayName; }
+	void setDisplayName(const QString& name) { m_displayName = name; }
+
 signals:
 	void clicked(MapTileItem* item);
 	void selectionChanged(MapTileItem* item, bool selected);
@@ -66,4 +78,8 @@ private:
 	bool m_dragging = false;
 	QPointF m_dragStartPos;
 	QPointF m_originalPos;
+
+	CollisionType m_collisionType = CollisionType::None;
+	QString m_tags;
+	QString m_displayName;
 };

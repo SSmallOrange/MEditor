@@ -11,6 +11,9 @@ MapTileItem::MapTileItem(const QPixmap& pixmap, const SpriteSlice& slice,
 	, m_gridX(gridX)
 	, m_gridY(gridY)
 	, m_layer(layer)
+	, m_collisionType(slice.collisionType)
+	, m_tags(slice.tags)
+	, m_displayName(slice.name)
 {
 	setTransformationMode(Qt::SmoothTransformation);
 	setAcceptedMouseButtons(Qt::LeftButton);
@@ -98,7 +101,7 @@ void MapTileItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 	{
 		painter->save();
 
-		// 绘制选中高亮边框（细边框）
+		// 绘制选中高亮边框
 		QPen pen(QColor(80, 140, 255), 1.5);
 		pen.setJoinStyle(Qt::MiterJoin);
 		painter->setPen(pen);
@@ -107,7 +110,7 @@ void MapTileItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 		QRectF rect = boundingRect().adjusted(0.5, 0.5, -0.5, -0.5);
 		painter->drawRect(rect);
 
-		// 绘制四角标记（更小的角标）
+		// 绘制四角标记
 		const qreal cornerSize = 5;
 		painter->setBrush(QBrush(QColor(80, 140, 255)));
 		painter->setPen(Qt::NoPen);

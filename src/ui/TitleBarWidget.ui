@@ -167,7 +167,47 @@ QPushButton:pressed {
 }</string>
      </property>
      <property name="text">
-      <string>导出</string>
+      <string> 导出</string>
+     </property>
+     <property name="flat">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="btnExport">
+     <property name="minimumSize">
+      <size>
+       <width>84</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>84</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::FocusPolicy::NoFocus</enum>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+	border:none; 
+	background:transparent;
+	color:#555555;
+}
+QPushButton:hover {
+	background:rgba(0,0,0,0.06); 
+	border-radius:12px;
+}
+QPushButton:pressed {
+	background:rgba(0,0,0,0.12);
+	border-radius:12px;
+}</string>
+     </property>
+     <property name="text">
+      <string>导入</string>
      </property>
      <property name="flat">
       <bool>true</bool>

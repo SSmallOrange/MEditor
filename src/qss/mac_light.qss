@@ -75,6 +75,17 @@ QWidget#widget {
 }
 
 #toolBarWidget QPushButton#btnImport {
+    qproperty-icon: url(:/export.png);
+    qproperty-iconSize: 16px 16px;
+
+    background: rgba(249, 251, 253, 230);
+    border: 1px solid rgba(216, 223, 231,255);
+    border-radius: 12px;
+
+    padding: 4px 12px 4px 16px;
+}
+
+#toolBarWidget QPushButton#btnExport {
     qproperty-icon: url(:/import.png);
     qproperty-iconSize: 18px 18px;
 

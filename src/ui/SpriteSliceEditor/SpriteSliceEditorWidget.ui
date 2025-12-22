@@ -30,6 +30,22 @@
        <number>6</number>
       </property>
       <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Policy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>400</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
        <widget class="QToolBar" name="toolBar">
         <property name="movable">
          <bool>false</bool>
@@ -46,19 +62,25 @@
         <addaction name="actionOpenSheet"/>
         <addaction name="actionSaveConfig"/>
         <addaction name="separator"/>
-        <addaction name="actionZoomIn"/>
-        <addaction name="actionZoomOut"/>
-        <addaction name="actionFitToWindow"/>
-        <addaction name="separator"/>
         <addaction name="actionToggleGrid"/>
         <addaction name="actionSnapToGrid"/>
         <addaction name="separator"/>
         <addaction name="actionGridMode"/>
         <addaction name="actionManualMode"/>
-        <addaction name="separator"/>
-        <addaction name="actionDeleteSlice"/>
-        <addaction name="actionClearSlices"/>
        </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
       <item>
        <widget class="QPushButton" name="btnReturn">
@@ -1105,21 +1127,6 @@
     <string>保存配置</string>
    </property>
   </action>
-  <action name="actionZoomIn">
-   <property name="text">
-    <string>放大</string>
-   </property>
-  </action>
-  <action name="actionZoomOut">
-   <property name="text">
-    <string>缩小</string>
-   </property>
-  </action>
-  <action name="actionFitToWindow">
-   <property name="text">
-    <string>适应窗口</string>
-   </property>
-  </action>
   <action name="actionToggleGrid">
    <property name="checkable">
     <bool>true</bool>
@@ -1150,16 +1157,6 @@
    </property>
    <property name="text">
     <string>手动模式</string>
-   </property>
-  </action>
-  <action name="actionDeleteSlice">
-   <property name="text">
-    <string>删除切片</string>
-   </property>
-  </action>
-  <action name="actionClearSlices">
-   <property name="text">
-    <string>清除所有切片</string>
    </property>
   </action>
  </widget>

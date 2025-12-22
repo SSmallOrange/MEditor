@@ -11,6 +11,7 @@
         <file>InspectorPanel/InspectorPanel_dark.qss</file>
         <file>SpriteSliceEditor/Return.png</file>
         <file>import.png</file>
+		<file>export.png</file>
         <file>save.png</file>
         <file>close.png</file>
         <file>minimize.png</file>

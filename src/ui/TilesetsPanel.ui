@@ -81,19 +81,6 @@
        </property>
       </spacer>
      </item>
-     <item>
-      <widget class="QToolButton" name="buttonCollapseAll">
-       <property name="toolTip">
-        <string>折叠/展开全部</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
     </layout>
    </item>
    <item>
@@ -103,6 +90,18 @@
      </property>
      <item>
       <widget class="QLineEdit" name="editSearch">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>28</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>28</height>
+        </size>
+       </property>
        <property name="placeholderText">
         <string>搜索图集...</string>
        </property>
@@ -140,7 +139,7 @@
         <x>0</x>
         <y>0</y>
         <width>296</width>
-        <height>430</height>
+        <height>432</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="layoutScroll">

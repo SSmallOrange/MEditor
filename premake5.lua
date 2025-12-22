@@ -25,7 +25,7 @@ project "MEditor"
     staticruntime "off"
 
     targetdir ("bin/%{cfg.buildcfg}")
-    objdir ("bin-int/%{cfg.buildcfg}")
+    objdir ("bin/int/%{cfg.buildcfg}")
 
     files {
         "src/**.h",

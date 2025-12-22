@@ -458,6 +458,204 @@ void MapViewWidget::updateMoveHighlight(const QPointF& scenePos, MapTileItem* ti
 	}
 }
 
+// ============== 复制瓦片 ==============
+bool MapViewWidget::hasPlacedTileAt(int gridX, int gridY, int layer) const
+{
+	for (const auto* tile : m_placedTiles)
+	{
+		if (tile->layer() != layer)
+			continue;
+
+		// 检查瓦片覆盖的所有网格
+		int tx = tile->gridX();
+		int ty = tile->gridY();
+		int tw = tile->gridWidth();
+		int th = tile->gridHeight();
+
+		if (gridX >= tx && gridX < tx + tw && gridY >= ty && gridY < ty + th)
+			return true;
+	}
+	return false;
+}
+
+MapTileItem* MapViewWidget::copyTileToGrid(MapTileItem* sourceTile, int gridX, int gridY)
+{
+	if (!sourceTile)
+		return nullptr;
+
+	// 检查边界
+	int gridW = sourceTile->gridWidth();
+	int gridH = sourceTile->gridHeight();
+
+	if (gridX < 0 || gridY < 0 ||
+		gridX + gridW > m_mapWidth || gridY + gridH > m_mapHeight)
+	{
+		return nullptr;
+	}
+
+	// 检查该位置是否已有瓦片
+	if (hasPlacedTileAt(gridX, gridY, m_currentLayer))
+	{
+		return nullptr;
+	}
+
+	// 创建新瓦片
+	auto* newTile = new MapTileItem(
+		sourceTile->originalPixmap(),
+		sourceTile->slice(),
+		gridX,
+		gridY,
+		m_currentLayer
+	);
+
+	newTile->setTilesetId(sourceTile->tilesetId());
+	newTile->setGridSize(gridW, gridH);
+	newTile->setPos(gridToScene(gridX, gridY));
+	newTile->setZValue(10 + m_currentLayer);
+
+	// 复制可编辑属性
+	newTile->setCollisionType(sourceTile->collisionType());
+	newTile->setTags(sourceTile->tags());
+	newTile->setDisplayName(sourceTile->displayName());
+
+	// 连接信号
+	connect(newTile, &MapTileItem::clicked, this, &MapViewWidget::onTileClicked);
+	connect(newTile, &MapTileItem::dragStarted, this, &MapViewWidget::onTileDragStarted);
+	connect(newTile, &MapTileItem::dragFinished, this, &MapViewWidget::onTileDragFinished);
+	connect(newTile, &MapTileItem::copyDragStarted, this, &MapViewWidget::onCopyDragStarted);
+	connect(newTile, &MapTileItem::copyDragMoved, this, &MapViewWidget::onCopyDragMoved);
+	connect(newTile, &MapTileItem::copyDragFinished, this, &MapViewWidget::onCopyDragFinished);
+
+	m_scene->addItem(newTile);
+	m_placedTiles.append(newTile);
+
+	qDebug() << "Copied tile to grid:" << gridX << "," << gridY;
+
+	return newTile;
+}
+
+void MapViewWidget::onCopyDragStarted(MapTileItem* tile, CornerZone corner)
+{
+	if (!tile || tile != m_selectedTile)
+		return;
+
+	m_copyDragging = true;
+	m_copyStartGrid = QPoint(tile->gridX(), tile->gridY());
+	m_copyLastGrid = m_copyStartGrid;
+	m_copyPlacedPositions.clear();
+
+	// 记录源瓦片位置（不重复放置）
+	m_copyPlacedPositions.insert(qMakePair(tile->gridX(), tile->gridY()));
+
+	qDebug() << "Copy drag started from corner:" << static_cast<int>(corner)
+		<< "at grid:" << m_copyStartGrid;
+}
+
+void MapViewWidget::onCopyDragMoved(MapTileItem* tile, const QPointF& scenePos)
+{
+	if (!m_copyDragging || !tile)
+		return;
+
+	QPoint currentGrid = sceneToGrid(scenePos);
+
+	// 如果网格位置没变，不处理
+	if (currentGrid == m_copyLastGrid)
+		return;
+
+	m_copyLastGrid = currentGrid;
+
+	// 计算需要填充的矩形区域
+	int startX = qMin(m_copyStartGrid.x(), currentGrid.x());
+	int startY = qMin(m_copyStartGrid.y(), currentGrid.y());
+	int endX = qMax(m_copyStartGrid.x(), currentGrid.x());
+	int endY = qMax(m_copyStartGrid.y(), currentGrid.y());
+
+	// 更新高亮显示
+	updateCopyHighlight(QPoint(startX, startY), QPoint(endX, endY));
+
+	// 动态放置瓦片：遍历矩形区域，放置还没有放置过的位置
+	int gridW = tile->gridWidth();
+	int gridH = tile->gridHeight();
+
+	for (int gy = startY; gy <= endY; gy += gridH)
+	{
+		for (int gx = startX; gx <= endX; gx += gridW)
+		{
+			QPair<int, int> pos = qMakePair(gx, gy);
+
+			// 跳过已经放置过的位置
+			if (m_copyPlacedPositions.contains(pos))
+				continue;
+
+			// 检查边界
+			if (gx < 0 || gy < 0 || gx + gridW > m_mapWidth || gy + gridH > m_mapHeight)
+				continue;
+
+			// 尝试放置
+			MapTileItem* newTile = copyTileToGrid(tile, gx, gy);
+			if (newTile)
+			{
+				m_copyPlacedPositions.insert(pos);
+			}
+		}
+	}
+}
+
+void MapViewWidget::onCopyDragFinished(MapTileItem* tile)
+{
+	Q_UNUSED(tile);
+
+	m_copyDragging = false;
+	m_copyPlacedPositions.clear();
+	clearCopyHighlight();
+
+	qDebug() << "Copy drag finished";
+}
+
+void MapViewWidget::updateCopyHighlight(const QPoint& startGrid, const QPoint& endGrid)
+{
+	clearCopyHighlight();
+
+	// 绘制整个复制区域的高亮
+	for (int gy = startGrid.y(); gy <= endGrid.y(); ++gy)
+	{
+		for (int gx = startGrid.x(); gx <= endGrid.x(); ++gx)
+		{
+			if (gx < 0 || gy < 0 || gx >= m_mapWidth || gy >= m_mapHeight)
+				continue;
+
+			QPointF topLeft = gridToScene(gx, gy);
+			auto* rect = new QGraphicsRectItem(topLeft.x(), topLeft.y(), m_tileWidth, m_tileHeight);
+
+			// 使用不同颜色区分已放置和待放置
+			if (hasPlacedTileAt(gx, gy, m_currentLayer))
+			{
+				rect->setPen(QPen(QColor(200, 200, 200), 1));
+				rect->setBrush(QBrush(QColor(200, 200, 200, 30)));
+			}
+			else
+			{
+				rect->setPen(QPen(QColor(100, 200, 100), 1));
+				rect->setBrush(QBrush(QColor(100, 200, 100, 40)));
+			}
+
+			rect->setZValue(998);
+			m_scene->addItem(rect);
+			m_copyHighlights.append(rect);
+		}
+	}
+}
+
+void MapViewWidget::clearCopyHighlight()
+{
+	for (auto* rect : m_copyHighlights)
+	{
+		m_scene->removeItem(rect);
+		delete rect;
+	}
+	m_copyHighlights.clear();
+}
+
 // ============== 拖放事件 ==============
 
 void MapViewWidget::dragEnterEvent(QDragEnterEvent* event)
@@ -666,6 +864,9 @@ void MapViewWidget::placeTile(const TileDragData& tileData, const QPoint& gridPo
 	connect(tileItem, &MapTileItem::clicked, this, &MapViewWidget::onTileClicked);
 	connect(tileItem, &MapTileItem::dragStarted, this, &MapViewWidget::onTileDragStarted);
 	connect(tileItem, &MapTileItem::dragFinished, this, &MapViewWidget::onTileDragFinished);
+	connect(tileItem, &MapTileItem::copyDragStarted, this, &MapViewWidget::onCopyDragStarted);
+	connect(tileItem, &MapTileItem::copyDragMoved, this, &MapViewWidget::onCopyDragMoved);
+	connect(tileItem, &MapTileItem::copyDragFinished, this, &MapViewWidget::onCopyDragFinished);
 
 	m_scene->addItem(tileItem);
 	m_placedTiles.append(tileItem);

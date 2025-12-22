@@ -5,9 +5,9 @@
 #include <QGraphicsRectItem>
 #include "core/MapDocument.h"
 #include "core/TileDragData.h"
+#include "MapTileItem.h"
 
 class AppContext;
-class MapTileItem;
 
 class MapViewWidget : public QGraphicsView
 {
@@ -112,6 +112,23 @@ private:
 	void onTileDragStarted(MapTileItem* tile);
 	void onTileDragFinished(MapTileItem* tile, const QPointF& scenePos);
 
+	// ========== 角落复制相关 ==========
+	void onCopyDragStarted(MapTileItem* tile, CornerZone corner);
+	void onCopyDragMoved(MapTileItem* tile, const QPointF& scenePos);
+	void onCopyDragFinished(MapTileItem* tile);
+
+	// 复制瓦片到指定位置（如果位置没有瓦片）
+	MapTileItem* copyTileToGrid(MapTileItem* sourceTile, int gridX, int gridY);
+
+	// 检查指定网格位置是否已有瓦片（同图层）
+	bool hasPlacedTileAt(int gridX, int gridY, int layer) const;
+
+	// 更新复制区域高亮
+	void updateCopyHighlight(const QPoint& startGrid, const QPoint& endGrid);
+
+	// 清除复制高亮
+	void clearCopyHighlight();
+
 private:
 	AppContext* m_ctx = nullptr;
 	QGraphicsScene* m_scene = nullptr;
@@ -152,4 +169,11 @@ private:
 	QPointF m_tileOriginalPos;
 	int m_tileOriginalGridX = 0;
 	int m_tileOriginalGridY = 0;
+
+	// 复制瓦片
+	bool m_copyDragging = false;
+	QPoint m_copyStartGrid;                           // 复制起始网格位置
+	QPoint m_copyLastGrid;                            // 上次处理的网格位置（用于增量放置）
+	QSet<QPair<int, int>> m_copyPlacedPositions;      // 本次复制已放置的位置
+	QVector<QGraphicsRectItem*> m_copyHighlights;     // 复制区域高亮
 };

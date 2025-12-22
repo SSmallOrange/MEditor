@@ -3,6 +3,7 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QStyleOptionGraphicsItem>
 #include <QApplication>
+#include <QCursor>
 
 MapTileItem::MapTileItem(const QPixmap& pixmap, const SpriteSlice& slice,
 	int gridX, int gridY, int layer, QGraphicsItem* parent)
@@ -18,6 +19,7 @@ MapTileItem::MapTileItem(const QPixmap& pixmap, const SpriteSlice& slice,
 	setTransformationMode(Qt::SmoothTransformation);
 	setAcceptedMouseButtons(Qt::LeftButton);
 	setFlag(QGraphicsItem::ItemIsSelectable, false);
+	setAcceptHoverEvents(true);  // 启用悬停事件
 }
 
 void MapTileItem::setGridPos(int x, int y)
@@ -36,12 +38,104 @@ void MapTileItem::setSelected(bool selected)
 	emit selectionChanged(this, selected);
 }
 
+CornerZone MapTileItem::detectCornerZone(const QPointF& localPos) const
+{
+	if (!m_selected)
+		return CornerZone::None;
+
+	QRectF rect = boundingRect();
+	qreal hitSize = CORNER_HIT_SIZE;
+
+	// 左上角
+	if (localPos.x() <= hitSize && localPos.y() <= hitSize)
+		return CornerZone::TopLeft;
+
+	// 右上角
+	if (localPos.x() >= rect.width() - hitSize && localPos.y() <= hitSize)
+		return CornerZone::TopRight;
+
+	// 左下角
+	if (localPos.x() <= hitSize && localPos.y() >= rect.height() - hitSize)
+		return CornerZone::BottomLeft;
+
+	// 右下角
+	if (localPos.x() >= rect.width() - hitSize && localPos.y() >= rect.height() - hitSize)
+		return CornerZone::BottomRight;
+
+	return CornerZone::None;
+}
+
+void MapTileItem::updateCursorForZone(CornerZone zone)
+{
+	switch (zone)
+	{
+	case CornerZone::TopLeft:
+	case CornerZone::BottomRight:
+		setCursor(Qt::SizeFDiagCursor);
+		break;
+	case CornerZone::TopRight:
+	case CornerZone::BottomLeft:
+		setCursor(Qt::SizeBDiagCursor);
+		break;
+	default:
+		unsetCursor();
+		break;
+	}
+}
+
+void MapTileItem::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
+{
+	if (m_selected)
+	{
+		CornerZone zone = detectCornerZone(event->pos());
+		m_currentCornerZone = zone;
+		updateCursorForZone(zone);
+	}
+	QGraphicsPixmapItem::hoverEnterEvent(event);
+}
+
+void MapTileItem::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
+{
+	if (m_selected)
+	{
+		CornerZone zone = detectCornerZone(event->pos());
+		if (zone != m_currentCornerZone)
+		{
+			m_currentCornerZone = zone;
+			updateCursorForZone(zone);
+			update();  // 更新绘制以显示角落高亮
+		}
+	}
+	QGraphicsPixmapItem::hoverMoveEvent(event);
+}
+
+void MapTileItem::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
+{
+	m_currentCornerZone = CornerZone::None;
+	unsetCursor();
+	update();
+	QGraphicsPixmapItem::hoverLeaveEvent(event);
+}
+
 void MapTileItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
 	if (event->button() == Qt::LeftButton)
 	{
 		m_dragStartPos = event->scenePos();
 		m_originalPos = pos();
+
+		// 检查是否在角落区域（用于复制拖动）
+		CornerZone zone = detectCornerZone(event->pos());
+		if (m_selected && zone != CornerZone::None)
+		{
+			// 开始角落复制拖动
+			m_copyDragging = true;
+			m_copyStartCorner = zone;
+			emit copyDragStarted(this, zone);
+			event->accept();
+			return;
+		}
+
 		emit clicked(this);
 		event->accept();
 		return;
@@ -51,6 +145,14 @@ void MapTileItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
 
 void MapTileItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 {
+	// 角落复制拖动
+	if (m_copyDragging)
+	{
+		emit copyDragMoved(this, event->scenePos());
+		event->accept();
+		return;
+	}
+
 	if (!m_selected)
 	{
 		QGraphicsPixmapItem::mouseMoveEvent(event);
@@ -80,13 +182,27 @@ void MapTileItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 
 void MapTileItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
-	if (event->button() == Qt::LeftButton && m_dragging)
+	if (event->button() == Qt::LeftButton)
 	{
-		m_dragging = false;
-		setOpacity(1.0);  // 恢复不透明
-		emit dragFinished(this, event->scenePos());
-		event->accept();
-		return;
+		// 角落复制拖动结束
+		if (m_copyDragging)
+		{
+			m_copyDragging = false;
+			m_copyStartCorner = CornerZone::None;
+			emit copyDragFinished(this);
+			event->accept();
+			return;
+		}
+
+		// 普通拖动结束
+		if (m_dragging)
+		{
+			m_dragging = false;
+			setOpacity(1.0);  // 恢复不透明
+			emit dragFinished(this, event->scenePos());
+			event->accept();
+			return;
+		}
 	}
 	QGraphicsPixmapItem::mouseReleaseEvent(event);
 }
@@ -111,18 +227,31 @@ void MapTileItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 		painter->drawRect(rect);
 
 		// 绘制四角标记
-		const qreal cornerSize = 5;
-		painter->setBrush(QBrush(QColor(80, 140, 255)));
+		const qreal cornerSize = CORNER_DRAW_SIZE;
 		painter->setPen(Qt::NoPen);
 
+		// 根据当前悬停的角落设置不同颜色
+		auto drawCorner = [&](QRectF cornerRect, CornerZone zone) {
+			if (m_currentCornerZone == zone)
+			{
+				// 悬停时使用更亮的颜色
+				painter->setBrush(QBrush(QColor(120, 200, 255)));
+			}
+			else
+			{
+				painter->setBrush(QBrush(QColor(80, 140, 255)));
+			}
+			painter->drawRect(cornerRect);
+			};
+
 		// 左上角
-		painter->drawRect(QRectF(rect.left(), rect.top(), cornerSize, cornerSize));
+		drawCorner(QRectF(rect.left(), rect.top(), cornerSize, cornerSize), CornerZone::TopLeft);
 		// 右上角
-		painter->drawRect(QRectF(rect.right() - cornerSize, rect.top(), cornerSize, cornerSize));
+		drawCorner(QRectF(rect.right() - cornerSize, rect.top(), cornerSize, cornerSize), CornerZone::TopRight);
 		// 左下角
-		painter->drawRect(QRectF(rect.left(), rect.bottom() - cornerSize, cornerSize, cornerSize));
+		drawCorner(QRectF(rect.left(), rect.bottom() - cornerSize, cornerSize, cornerSize), CornerZone::BottomLeft);
 		// 右下角
-		painter->drawRect(QRectF(rect.right() - cornerSize, rect.bottom() - cornerSize, cornerSize, cornerSize));
+		drawCorner(QRectF(rect.right() - cornerSize, rect.bottom() - cornerSize, cornerSize, cornerSize), CornerZone::BottomRight);
 
 		painter->restore();
 	}

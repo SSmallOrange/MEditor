@@ -6,6 +6,16 @@
 
 class MapViewWidget;
 
+// 角落区域枚举
+enum class CornerZone
+{
+	None = 0,
+	TopLeft,
+	TopRight,
+	BottomLeft,
+	BottomRight
+};
+
 // 地图上的瓦片图元
 class MapTileItem : public QObject, public QGraphicsPixmapItem
 {
@@ -52,17 +62,39 @@ public:
 	QString displayName() const { return m_displayName; }
 	void setDisplayName(const QString& name) { m_displayName = name; }
 
+	// 角落复制相关
+	bool isCopyDragging() const { return m_copyDragging; }
+	CornerZone currentCornerZone() const { return m_currentCornerZone; }
+
+	// 获取原始 pixmap（用于复制）
+	QPixmap originalPixmap() const { return pixmap(); }
+
 signals:
 	void clicked(MapTileItem* item);
 	void selectionChanged(MapTileItem* item, bool selected);
 	void dragStarted(MapTileItem* item);
 	void dragFinished(MapTileItem* item, const QPointF& scenePos);
 
+	// 角落复制信号
+	void copyDragStarted(MapTileItem* item, CornerZone corner);
+	void copyDragMoved(MapTileItem* item, const QPointF& scenePos);
+	void copyDragFinished(MapTileItem* item);
+
 protected:
 	void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
 	void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
 	void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
+	void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
+	void hoverMoveEvent(QGraphicsSceneHoverEvent* event) override;
+	void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
+
+private:
+	// 检测鼠标位置对应的角落区域
+	CornerZone detectCornerZone(const QPointF& localPos) const;
+
+	// 更新鼠标光标
+	void updateCursorForZone(CornerZone zone);
 
 private:
 	SpriteSlice m_slice;
@@ -82,4 +114,11 @@ private:
 	CollisionType m_collisionType = CollisionType::None;
 	QString m_tags;
 	QString m_displayName;
+
+	// 复制
+	bool m_copyDragging = false;
+	CornerZone m_currentCornerZone = CornerZone::None;
+	CornerZone m_copyStartCorner = CornerZone::None;
+	static constexpr qreal CORNER_HIT_SIZE = 6.0;   // 角落检测区域大小（点击判定）
+	static constexpr qreal CORNER_DRAW_SIZE = 5.0;  // 角落绘制大小（视觉显示）
 };

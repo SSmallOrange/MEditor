@@ -1078,6 +1078,20 @@ void MapViewWidget::keyPressEvent(QKeyEvent* event)
 		return;
 	}
 
+	// H 键水平翻转选中的瓦片
+	if (event->key() == Qt::Key_H && m_selectedTile)
+	{
+		m_selectedTile->toggleFlipX();
+		return;
+	}
+
+	// V 键垂直翻转选中的瓦片
+	if (event->key() == Qt::Key_V && m_selectedTile)
+	{
+		m_selectedTile->toggleFlipY();
+		return;
+	}
+
 	QGraphicsView::keyPressEvent(event);
 }
 
@@ -1188,7 +1202,8 @@ void MapViewWidget::clearAllTiles()
 // ============== 导入时放置瓦片 ==============
 void MapViewWidget::placeTileAt(int gridX, int gridY, const QString& tilesetId, const SpriteSlice& slice,
 	const QPixmap& pixmap, int layer, const QString& displayName,
-	CollisionType collisionType, const QString& tags)
+	CollisionType collisionType, const QString& tags,
+	bool flipX, bool flipY)
 {
 	// 检查边界
 	int gridW = slice.width / m_tileWidth;
@@ -1229,6 +1244,16 @@ void MapViewWidget::placeTileAt(int gridX, int gridY, const QString& tilesetId, 
 	tileItem->setCollisionType(collisionType);
 	tileItem->setTags(tags);
 
+	// 设置翻转状态
+	if (flipX)
+	{
+		tileItem->setFlipX(true);
+	}
+	if (flipY)
+	{
+		tileItem->setFlipY(true);
+	}
+
 	// 连接信号
 	connect(tileItem, &MapTileItem::clicked, this, &MapViewWidget::onTileClicked);
 	connect(tileItem, &MapTileItem::dragStarted, this, &MapViewWidget::onTileDragStarted);
@@ -1246,5 +1271,6 @@ void MapViewWidget::placeTileAt(int gridX, int gridY, const QString& tilesetId, 
 	qDebug() << "Imported tile:" << slice.name
 		<< "at grid:" << gridX << "," << gridY
 		<< "size:" << gridW << "x" << gridH
-		<< "layer:" << layer;
+		<< "layer:" << layer
+		<< "flipX:" << flipX << "flipY:" << flipY;
 }

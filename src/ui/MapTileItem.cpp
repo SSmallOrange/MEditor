@@ -15,6 +15,7 @@ MapTileItem::MapTileItem(const QPixmap& pixmap, const SpriteSlice& slice,
 	, m_collisionType(slice.collisionType)
 	, m_tags(slice.tags)
 	, m_displayName(slice.name)
+	, m_originalPixmap(pixmap)  // 保存原始 pixmap
 {
 	setTransformationMode(Qt::SmoothTransformation);
 	setAcceptedMouseButtons(Qt::LeftButton);
@@ -303,4 +304,56 @@ void MapTileItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* optio
 
 		painter->restore();
 	}
+}
+
+// ============== 翻转功能 ==============
+
+void MapTileItem::setFlipX(bool flip)
+{
+	if (m_flipX == flip)
+		return;
+
+	m_flipX = flip;
+	updateDisplayPixmap();
+}
+
+void MapTileItem::setFlipY(bool flip)
+{
+	if (m_flipY == flip)
+		return;
+
+	m_flipY = flip;
+	updateDisplayPixmap();
+}
+
+void MapTileItem::toggleFlipX()
+{
+	m_flipX = !m_flipX;
+	updateDisplayPixmap();
+	qDebug() << "Tile flip X:" << m_flipX;
+}
+
+void MapTileItem::toggleFlipY()
+{
+	m_flipY = !m_flipY;
+	updateDisplayPixmap();
+	qDebug() << "Tile flip Y:" << m_flipY;
+}
+
+void MapTileItem::updateDisplayPixmap()
+{
+	if (m_originalPixmap.isNull())
+		return;
+
+	QPixmap displayPixmap = m_originalPixmap;
+
+	// 应用翻转变换
+	if (m_flipX || m_flipY)
+	{
+		QTransform transform;
+		transform.scale(m_flipX ? -1 : 1, m_flipY ? -1 : 1);
+		displayPixmap = m_originalPixmap.transformed(transform);
+	}
+
+	setPixmap(displayPixmap);
 }

@@ -62,6 +62,14 @@ public:
 	QString displayName() const { return m_displayName; }
 	void setDisplayName(const QString& name) { m_displayName = name; }
 
+	// 翻转
+	bool isFlippedX() const { return m_flipX; }
+	bool isFlippedY() const { return m_flipY; }
+	void setFlipX(bool flip);
+	void setFlipY(bool flip);
+	void toggleFlipX();
+	void toggleFlipY();
+
 	// 角落复制相关
 	bool isCopyDragging() const { return m_copyDragging; }
 	CornerZone currentCornerZone() const { return m_currentCornerZone; }
@@ -70,7 +78,7 @@ public:
 	bool isDeleteDragging() const { return m_deleteDragging; }
 
 	// 获取原始 pixmap（用于复制）
-	QPixmap originalPixmap() const { return pixmap(); }
+	QPixmap originalPixmap() const { return m_originalPixmap; }
 
 signals:
 	void clicked(MapTileItem* item);
@@ -104,6 +112,9 @@ private:
 	// 更新鼠标光标
 	void updateCursorForZone(CornerZone zone, bool shiftPressed = false);
 
+	// 更新显示的 pixmap（应用翻转）
+	void updateDisplayPixmap();
+
 private:
 	SpriteSlice m_slice;
 	QString m_tilesetId;
@@ -122,6 +133,11 @@ private:
 	CollisionType m_collisionType = CollisionType::None;
 	QString m_tags;
 	QString m_displayName;
+
+	// 翻转
+	bool m_flipX = false;
+	bool m_flipY = false;
+	QPixmap m_originalPixmap;  // 保存原始未翻转的 pixmap
 
 	// 复制
 	bool m_copyDragging = false;

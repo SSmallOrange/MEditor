@@ -312,8 +312,8 @@ QJsonObject MapExporter::buildTileData(MapTileItem* tile, const QMap<QString, in
 
 	// ========== ±ä»»ÐÅÏ¢ ==========
 	QJsonObject transform;
-	transform["flipX"] = false;
-	transform["flipY"] = false;
+	transform["flipX"] = tile->isFlippedX();
+	transform["flipY"] = tile->isFlippedY();
 	transform["rotation"] = 0;
 	tileObj["transform"] = transform;
 

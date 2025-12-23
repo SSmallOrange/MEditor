@@ -42,7 +42,8 @@ public:
 	// 导入时放置瓦片
 	void placeTileAt(int gridX, int gridY, const QString& tilesetId, const SpriteSlice& slice,
 		const QPixmap& pixmap, int layer, const QString& displayName,
-		CollisionType collisionType, const QString& tags);
+		CollisionType collisionType, const QString& tags,
+		bool flipX = false, bool flipY = false);
 
 public slots:
 	// 设置属性

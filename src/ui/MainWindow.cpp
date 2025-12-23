@@ -96,6 +96,7 @@ void MainWindow::SetupConnections()
 void MainWindow::SetupTitleBarConnections()
 {
 	connect(ui->toolBarWidget, &TitleBarWidget::exportRequested, this, &MainWindow::onExportMap);
+	connect(ui->toolBarWidget, &TitleBarWidget::importRequested, this, &MainWindow::onImportMap);
 	connect(ui->toolBarWidget, &TitleBarWidget::restartRequested, this, &MainWindow::onResetMap);
 	connect(ui->toolBarWidget, &TitleBarWidget::saveRequested, this, &MainWindow::onSaveMap);
 }
@@ -294,7 +295,7 @@ void MainWindow::onInspectorNameChanged(const QString& name)
 		return;
 
 	tile->setDisplayName(name);
-	ui->label->setText(QString("名称已更新: %1").arg(name));
+	ui->label->setText(QStringLiteral("名称已更新: %1").arg(name));
 	qDebug() << "Tile name changed to:" << name;
 }
 
@@ -315,7 +316,7 @@ void MainWindow::onInspectorCollisionTypeChanged(CollisionType type)
 	default: typeName = "未知"; break;
 	}
 
-	ui->label->setText(QString("碰撞类型已更新: %1").arg(typeName));
+	ui->label->setText(QStringLiteral("碰撞类型已更新: %1").arg(typeName));
 	qDebug() << "Tile collision type changed to:" << static_cast<int>(type);
 }
 
@@ -326,7 +327,7 @@ void MainWindow::onInspectorTagsChanged(const QString& tags)
 		return;
 
 	tile->setTags(tags);
-	ui->label->setText(QString("标签已更新: %1").arg(tags.isEmpty() ? "(无)" : tags));
+	ui->label->setText(QStringLiteral("标签已更新: %1").arg(tags.isEmpty() ? "(无)" : tags));
 	qDebug() << "Tile tags changed to:" << tags;
 }
 
@@ -382,10 +383,14 @@ void MainWindow::onExportMap()
 	MapExporter::ExportOptions options;
 	options.prettyPrint = true;
 
+	// 获取所有图集数据
+	QVector<SpriteSheetData> tilesets = ui->TilesetsPanelWidget->getAllTilesetData();
+
 	bool success = MapExporter::exportToJson(
 		filePath,
 		doc,
 		tiles,
+		tilesets,  // 传入完整的图集数据
 		ui->mapViewWidget->tileWidth(),
 		ui->mapViewWidget->tileHeight(),
 		options
@@ -397,9 +402,10 @@ void MainWindow::onExportMap()
 		QMessageBox::information(
 			this,
 			QStringLiteral("导出成功"),
-			QString("地图已成功导出到:\n%1\n\n共导出 %2 个瓦片")
+			QStringLiteral("地图已成功导出到:\n%1\n\n共导出 %2 个瓦片，%3 个图集")
 			.arg(filePath)
 			.arg(tiles.size())
+			.arg(tilesets.size())
 		);
 	}
 	else
@@ -408,9 +414,157 @@ void MainWindow::onExportMap()
 		QMessageBox::critical(
 			this,
 			QStringLiteral("导出失败"),
-			QString("导出失败: %1").arg(MapExporter::lastError())
+			QStringLiteral("导出失败: %1").arg(MapExporter::lastError())
 		);
 	}
+}
+
+void MainWindow::onImportMap()
+{
+	// 打开文件选择对话框
+	QString filePath = QFileDialog::getOpenFileName(
+		this,
+		QStringLiteral("导入地图"),
+		QString(),
+		QStringLiteral("JSON 文件 (*.json);;所有文件 (*.*)")
+	);
+
+	if (filePath.isEmpty())
+		return;
+
+	// 检查是否需要清除当前地图
+	const auto& currentTiles = ui->mapViewWidget->placedTiles();
+	if (!currentTiles.isEmpty())
+	{
+		QMessageBox::StandardButton reply = QMessageBox::question(
+			this,
+			QStringLiteral("确认导入"),
+			QStringLiteral("当前地图中已有瓦片，导入将清除现有内容。是否继续？"),
+			QMessageBox::Yes | QMessageBox::No
+		);
+
+		if (reply != QMessageBox::Yes)
+			return;
+	}
+
+	// 执行导入
+	ui->label->setText(QStringLiteral("正在导入..."));
+	QApplication::processEvents();
+
+	MapImportResult result = MapImporter::importFromJson(filePath);
+
+	if (!result.success)
+	{
+		ui->label->setText(QStringLiteral("导入失败"));
+		QMessageBox::critical(
+			this,
+			QStringLiteral("导入失败"),
+			QStringLiteral("导入失败: %1").arg(result.errorMessage)
+		);
+		return;
+	}
+
+	// 应用导入结果
+	applyImportResult(result);
+
+	ui->label->setText(QString("导入成功: %1 个瓦片").arg(result.tiles.size()));
+	QMessageBox::information(
+		this,
+		QStringLiteral("导入成功"),
+		QString(QStringLiteral("地图导入成功!\n\n"
+			"地图名称: %1\n"
+			"地图尺寸: %2 x %3\n"
+			"瓦片尺寸: %4 x %5\n"
+			"瓦片数量: %6\n\n"
+			"注意: 请确保已加载所需的图集以正确显示瓦片。"))
+		.arg(result.mapName)
+		.arg(result.mapWidth)
+		.arg(result.mapHeight)
+		.arg(result.tileWidth)
+		.arg(result.tileHeight)
+		.arg(result.tiles.size())
+	);
+}
+
+void MainWindow::applyImportResult(const MapImportResult& result)
+{
+	// 清除当前地图
+	ui->mapViewWidget->clearAllTiles();
+	ui->inspectorPanel->clearInfo();
+
+	// 清除当前图集
+	ui->TilesetsPanelWidget->clearAllTilesets();
+
+	// 更新地图文档
+	MapDocument* doc = const_cast<MapDocument*>(m_ctx->documentManager.document());
+	if (doc)
+	{
+		doc->name = result.mapName;
+		doc->width = result.mapWidth;
+		doc->height = result.mapHeight;
+		doc->tileWidth = result.tileWidth;
+		doc->tileHeight = result.tileHeight;
+	}
+
+	// 更新 UI 控件
+	ui->spinboxGridWidth->blockSignals(true);
+	ui->spinboxGridHeight->blockSignals(true);
+	ui->spinboxMapWidth->blockSignals(true);
+	ui->spinboxMapHeight->blockSignals(true);
+
+	ui->spinboxGridWidth->setValue(result.tileWidth);
+	ui->spinboxGridHeight->setValue(result.tileHeight);
+	ui->spinboxMapWidth->setValue(result.mapWidth);
+	ui->spinboxMapHeight->setValue(result.mapHeight);
+
+	ui->spinboxGridWidth->blockSignals(false);
+	ui->spinboxGridHeight->blockSignals(false);
+	ui->spinboxMapWidth->blockSignals(false);
+	ui->spinboxMapHeight->blockSignals(false);
+
+	// 更新 MapViewWidget
+	ui->mapViewWidget->setGridSize(result.tileWidth, result.tileHeight);
+	ui->mapViewWidget->setMapSize(result.mapWidth, result.mapHeight);
+
+	// 加载图集到 TilesetsPanel
+	for (const SpriteSheetData& sheetData : result.tilesets)
+	{
+		ui->TilesetsPanelWidget->onSpriteSheetConfirmed(sheetData);
+	}
+
+	// 放置瓦片
+	for (const ImportedTileData& tileData : result.tiles)
+	{
+		SpriteSlice slice;
+		QPixmap pixmap;
+
+		// 从已加载的图集中查找切片
+		if (ui->TilesetsPanelWidget->findSliceById(tileData.tilesetId, tileData.sliceId, slice, pixmap))
+		{
+			// 创建并放置瓦片
+			ui->mapViewWidget->placeTileAt(
+				tileData.gridX,
+				tileData.gridY,
+				tileData.tilesetId,
+				slice,
+				pixmap,
+				tileData.layer,
+				tileData.displayName,
+				static_cast<CollisionType>(tileData.collisionTypeId),
+				tileData.tags
+			);
+		}
+		else
+		{
+			qWarning() << "Could not find slice:" << tileData.sliceId << "in tileset:" << tileData.tilesetId;
+		}
+	}
+
+	qDebug() << "Map imported:" << result.mapName
+		<< "Size:" << result.mapWidth << "x" << result.mapHeight
+		<< "Tile size:" << result.tileWidth << "x" << result.tileHeight
+		<< "Tilesets:" << result.tilesets.size()
+		<< "Tiles:" << result.tiles.size();
 }
 
 void MainWindow::onResetMap()

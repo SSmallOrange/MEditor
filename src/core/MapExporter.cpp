@@ -3,12 +3,15 @@
 #include "SpriteSliceDefine.h"
 #include "ui/MapTileItem.h"
 
-#include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDateTime>
+#include <QFile>
 #include <QSet>
+#include <QDir>
+
 
 QString MapExporter::s_lastError;
 
@@ -16,6 +19,7 @@ bool MapExporter::exportToJson(
 	const QString& filePath,
 	const MapDocument* document,
 	const QVector<MapTileItem*>& tiles,
+	const QVector<SpriteSheetData>& tilesets,
 	int tileWidth,
 	int tileHeight,
 	const ExportOptions& options)
@@ -30,7 +34,7 @@ bool MapExporter::exportToJson(
 
 	// ========== 文件头信息 ==========
 	QJsonObject header;
-	header["version"] = "1.2";
+	header["version"] = "1.3";  // 版本升级
 	header["generator"] = "MEditor";
 	header["exportTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
 	root["header"] = header;
@@ -38,8 +42,8 @@ bool MapExporter::exportToJson(
 	// ========== 地图元数据 ==========
 	root["map"] = buildMapMeta(document, tileWidth, tileHeight);
 
-	// ========== 图集引用 ==========
-	root["tilesets"] = buildTilesetReferences(tiles);
+	// ========== 图集数据（包含完整精灵图配置） ==========
+	root["tilesets"] = buildTilesetData(tilesets, filePath);
 
 	// ========== 切片数据 ==========
 	QMap<QString, int> sliceIdMap;  // UUID -> 数组索引
@@ -70,6 +74,59 @@ bool MapExporter::exportToJson(
 	return true;
 }
 
+QJsonArray MapExporter::buildTilesetData(const QVector<SpriteSheetData>& tilesets, const QString& jsonFilePath)
+{
+	QJsonArray tilesetsArray;
+	QDir jsonDir = QFileInfo(jsonFilePath).absoluteDir();
+
+	int index = 0;
+	for (const SpriteSheetData& data : tilesets)
+	{
+		QJsonObject tilesetObj;
+
+		// 基本信息
+		tilesetObj["id"] = index++;
+		tilesetObj["name"] = data.fileName;
+
+		// 计算相对路径
+		QString relativePath = jsonDir.relativeFilePath(data.filePath);
+		tilesetObj["imagePath"] = relativePath;
+		tilesetObj["imageWidth"] = data.imageWidth;
+		tilesetObj["imageHeight"] = data.imageHeight;
+
+		// 切片数据
+		QJsonArray slicesArray;
+		for (const SpriteSlice& slice : data.slices)
+		{
+			QJsonObject sliceObj;
+			sliceObj["id"] = slice.id.toString(QUuid::WithoutBraces);
+			sliceObj["name"] = slice.name;
+			sliceObj["x"] = slice.x;
+			sliceObj["y"] = slice.y;
+			sliceObj["width"] = slice.width;
+			sliceObj["height"] = slice.height;
+			sliceObj["group"] = slice.group;
+			sliceObj["tags"] = slice.tags;
+			sliceObj["isCollision"] = slice.isCollision;
+			sliceObj["isDecorationOnly"] = slice.isDecorationOnly;
+
+			QJsonObject anchorObj;
+			anchorObj["x"] = slice.anchor.x();
+			anchorObj["y"] = slice.anchor.y();
+			sliceObj["anchor"] = anchorObj;
+
+			sliceObj["collisionType"] = static_cast<int>(slice.collisionType);
+
+			slicesArray.append(sliceObj);
+		}
+		tilesetObj["slices"] = slicesArray;
+
+		tilesetsArray.append(tilesetObj);
+	}
+
+	return tilesetsArray;
+}
+
 QJsonObject MapExporter::buildMapMeta(const MapDocument* doc, int tileWidth, int tileHeight)
 {
 	QJsonObject map;
@@ -88,32 +145,6 @@ QJsonObject MapExporter::buildMapMeta(const MapDocument* doc, int tileWidth, int
 	map["pixelSize"] = pixelSize;
 
 	return map;
-}
-
-QJsonArray MapExporter::buildTilesetReferences(const QVector<MapTileItem*>& tiles)
-{
-	QJsonArray tilesets;
-	QSet<QString> usedTilesets;
-
-	for (const auto* tile : tiles)
-	{
-		if (tile && !tile->tilesetId().isEmpty())
-		{
-			usedTilesets.insert(tile->tilesetId());
-		}
-	}
-
-	int index = 0;
-	for (const QString& tilesetId : usedTilesets)
-	{
-		QJsonObject tileset;
-		tileset["id"] = index++;
-		tileset["name"] = tilesetId;
-		tileset["source"] = "";
-		tilesets.append(tileset);
-	}
-
-	return tilesets;
 }
 
 QJsonArray MapExporter::buildSlicesArray(

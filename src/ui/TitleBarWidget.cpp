@@ -13,29 +13,34 @@ TitleBarWidget::TitleBarWidget(QWidget* parent)
 	QObject::connect(ui.btnClose, &QPushButton::clicked, this, [this]() {
 		if (auto w = window())
 			w->close();
-		});
+	});
 
 	// 最小化按钮
 	QObject::connect(ui.btnMinimize, &QPushButton::clicked, this, [this]() {
 		emit minimizeRequested();
 		if (auto w = window())
 			w->showMinimized();
-		});
+	});
 
 	// 重置按钮
 	QObject::connect(ui.btnRestart, &QPushButton::clicked, this, [this]() {
 		emit restartRequested();
-		});
+	});
 
 	// 保存按钮
 	QObject::connect(ui.btnSave, &QPushButton::clicked, this, [this]() {
 		emit saveRequested();
-		});
+	});
 
 	// 导出按钮
+	QObject::connect(ui.btnExport, &QPushButton::clicked, this, [this]() {
+		emit importRequested();
+	});
+
+	// 导入按钮
 	QObject::connect(ui.btnImport, &QPushButton::clicked, this, [this]() {
 		emit exportRequested();
-		});
+	});
 }
 
 void TitleBarWidget::mousePressEvent(QMouseEvent* event)

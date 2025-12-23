@@ -21,12 +21,16 @@ public:
 
 	void initSliceTable();
 
-	// 导出用：从表格获取所有切片数据
+	// 从表格获取所有切片数据
 	QVector<SpriteSlice> getAllSlicesFromTable() const;
 	SpriteSlice getSliceFromTable(int row) const;
 
-	// 获取当前完整的精灵图集数据
+	// 获取当前编辑的精灵图数据
 	SpriteSheetData getSpriteSheetData() const;
+
+	// 导入/导出配置
+	bool exportConfig(const QString& jsonPath);
+	bool importConfig(const QString& jsonPath);
 
 protected:
 	bool eventFilter(QObject* watched, QEvent* event) override;
@@ -48,10 +52,10 @@ private slots:
 	void onGenerateGridSlicesClicked();
 	void onClearGridSlicesClicked();
 
-	// 表格选择变化
+	// 切片选择变化
 	void onSliceSelectionChanged();
 
-	// 右侧面板操作
+	// 右侧检查器
 	void onApplySliceClicked();
 	void onResetSliceClicked();
 	void onAnchorPresetChanged(int index);
@@ -72,6 +76,9 @@ private slots:
 
 	// 数据导出
 	void onOkButtonClicked();
+
+	// 保存/加载配置
+	void onSaveConfigClicked();
 
 private:
 	void setupConnections();

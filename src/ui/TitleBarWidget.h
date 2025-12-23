@@ -17,6 +17,7 @@ signals:
 	void restartRequested();
 	void saveRequested();
 	void exportRequested();
+	void importRequested();
 	void minimizeRequested();
 
 protected:

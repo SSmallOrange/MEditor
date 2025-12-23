@@ -39,6 +39,11 @@ public:
 	// 清空所有瓦片
 	void clearAllTiles();
 
+	// 导入时放置瓦片
+	void placeTileAt(int gridX, int gridY, const QString& tilesetId, const SpriteSlice& slice,
+		const QPixmap& pixmap, int layer, const QString& displayName,
+		CollisionType collisionType, const QString& tags);
+
 public slots:
 	// 设置属性
 	void setGridVisible(bool visible);

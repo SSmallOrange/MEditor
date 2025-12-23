@@ -9,6 +9,7 @@
 class MapTileItem;
 struct MapDocument;
 struct SpriteSlice;
+struct SpriteSheetData;
 
 // 地图导出器
 class MapExporter
@@ -26,6 +27,7 @@ public:
 		const QString& filePath,
 		const MapDocument* document,
 		const QVector<MapTileItem*>& tiles,
+		const QVector<SpriteSheetData>& tilesets,  // 完整的图集数据
 		int tileWidth,
 		int tileHeight,
 		const ExportOptions& options = ExportOptions()
@@ -57,8 +59,8 @@ private:
 	// 构建单个切片数据
 	static QJsonObject buildSliceData(const SpriteSlice& slice);
 
-	// 构建图集引用数据
-	static QJsonArray buildTilesetReferences(const QVector<MapTileItem*>& tiles);
+	// 构建图集引用数组
+	static QJsonArray buildTilesetData(const QVector<SpriteSheetData>& tilesets, const QString& jsonFilePath);
 
 	static QString s_lastError;
 };

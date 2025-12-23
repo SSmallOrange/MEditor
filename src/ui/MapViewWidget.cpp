@@ -1184,3 +1184,67 @@ void MapViewWidget::clearAllTiles()
 
 	qDebug() << "Cleared all tiles";
 }
+
+// ============== 导入时放置瓦片 ==============
+void MapViewWidget::placeTileAt(int gridX, int gridY, const QString& tilesetId, const SpriteSlice& slice,
+	const QPixmap& pixmap, int layer, const QString& displayName,
+	CollisionType collisionType, const QString& tags)
+{
+	// 检查边界
+	int gridW = slice.width / m_tileWidth;
+	int gridH = slice.height / m_tileHeight;
+
+	if (gridW <= 0) gridW = 1;
+	if (gridH <= 0) gridH = 1;
+
+	if (gridX < 0 || gridY < 0 ||
+		gridX + gridW > m_mapWidth || gridY + gridH > m_mapHeight)
+	{
+		qWarning() << "placeTileAt: out of bounds - grid:" << gridX << "," << gridY
+			<< "size:" << gridW << "x" << gridH
+			<< "map:" << m_mapWidth << "x" << m_mapHeight;
+		return;
+	}
+
+	// 缩放 pixmap 以匹配网格尺寸
+	QPixmap scaledPixmap = pixmap.scaled(
+		gridW * m_tileWidth,
+		gridH * m_tileHeight,
+		Qt::IgnoreAspectRatio,
+		Qt::SmoothTransformation
+	);
+
+	// 创建瓦片图元
+	auto* tileItem = new MapTileItem(scaledPixmap, slice, gridX, gridY, layer);
+	tileItem->setTilesetId(tilesetId);
+	tileItem->setGridSize(gridW, gridH);
+	tileItem->setPos(gridToScene(gridX, gridY));
+	tileItem->setZValue(10 + layer);
+
+	// 设置额外属性
+	if (!displayName.isEmpty())
+	{
+		tileItem->setDisplayName(displayName);
+	}
+	tileItem->setCollisionType(collisionType);
+	tileItem->setTags(tags);
+
+	// 连接信号
+	connect(tileItem, &MapTileItem::clicked, this, &MapViewWidget::onTileClicked);
+	connect(tileItem, &MapTileItem::dragStarted, this, &MapViewWidget::onTileDragStarted);
+	connect(tileItem, &MapTileItem::dragFinished, this, &MapViewWidget::onTileDragFinished);
+	connect(tileItem, &MapTileItem::copyDragStarted, this, &MapViewWidget::onCopyDragStarted);
+	connect(tileItem, &MapTileItem::copyDragMoved, this, &MapViewWidget::onCopyDragMoved);
+	connect(tileItem, &MapTileItem::copyDragFinished, this, &MapViewWidget::onCopyDragFinished);
+	connect(tileItem, &MapTileItem::deleteDragStarted, this, &MapViewWidget::onDeleteDragStarted);
+	connect(tileItem, &MapTileItem::deleteDragMoved, this, &MapViewWidget::onDeleteDragMoved);
+	connect(tileItem, &MapTileItem::deleteDragFinished, this, &MapViewWidget::onDeleteDragFinished);
+
+	m_scene->addItem(tileItem);
+	m_placedTiles.append(tileItem);
+
+	qDebug() << "Imported tile:" << slice.name
+		<< "at grid:" << gridX << "," << gridY
+		<< "size:" << gridW << "x" << gridH
+		<< "layer:" << layer;
+}

@@ -102,6 +102,8 @@
        </widget>
       </item>
      </layout>
+     <zorder>btnReturn</zorder>
+     <zorder>toolBar</zorder>
     </widget>
    </item>
    <item>

@@ -10,6 +10,10 @@
 #include <QActionGroup>
 #include <algorithm>
 
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+
 SpriteSliceEditorWidget::SpriteSliceEditorWidget(QWidget* parent)
 	: QWidget(parent)
 	, ui(new Ui::SpriteSliceEditorWidget)
@@ -176,6 +180,10 @@ void SpriteSliceEditorWidget::setupConnections()
 
 	// 确认按钮
 	connect(ui->okButton, &QPushButton::clicked, this, &SpriteSliceEditorWidget::onOkButtonClicked);
+
+	// 保存/加载配置 - 连接 toolbar actions
+	connect(ui->actionSaveConfig, &QAction::triggered, this, &SpriteSliceEditorWidget::onSaveConfigClicked);
+	// connect(ui->actionLoadConfig, &QAction::triggered, this, &SpriteSliceEditorWidget::onLoadConfigClicked);
 }
 
 // ============== 确认按钮 ==============
@@ -439,13 +447,24 @@ void SpriteSliceEditorWidget::onAddSheetClicked()
 {
 	QString filePath = QFileDialog::getOpenFileName(
 		this,
-		QStringLiteral("选择精灵图"),
+		QStringLiteral("选择图集"),
 		QString(),
-		QStringLiteral("图片文件 (*.png *.jpg *.jpeg *.bmp *.gif);;所有文件 (*.*)")
+		QStringLiteral("图片文件 (*.png *.jpg *.jpeg *.bmp *.gif);;JSON 配置 (*.json);;所有文件 (*.*)")
 	);
 
 	if (filePath.isEmpty())
 		return;
+
+	// 如果选择了 JSON 文件，导入配置
+	if (filePath.endsWith(".json", Qt::CaseInsensitive))
+	{
+		if (!importConfig(filePath))
+		{
+			QMessageBox::warning(this, QStringLiteral("错误"),
+				QStringLiteral("无法加载配置文件"));
+		}
+		return;
+	}
 
 	loadSpriteSheet(filePath);
 }
@@ -1152,4 +1171,204 @@ bool SpriteSliceEditorWidget::eventFilter(QObject* watched, QEvent* event)
 		}
 	}
 	return QWidget::eventFilter(watched, event);
+}
+
+// ============== 配置导入/导出 ==============
+
+void SpriteSliceEditorWidget::onSaveConfigClicked()
+{
+	if (m_currentFilePath.isEmpty() || m_slices.isEmpty())
+	{
+		QMessageBox::warning(this, QStringLiteral("警告"),
+			QStringLiteral("请先加载精灵图并创建切片"));
+		return;
+	}
+
+	QString defaultName = QFileInfo(m_currentFilePath).baseName() + ".json";
+	QString jsonPath = QFileDialog::getSaveFileName(
+		this,
+		QStringLiteral("保存精灵图配置"),
+		defaultName,
+		QStringLiteral("JSON 文件 (*.json)")
+	);
+
+	if (jsonPath.isEmpty())
+		return;
+
+	if (exportConfig(jsonPath))
+	{
+		QMessageBox::information(this, QStringLiteral("成功"),
+			QStringLiteral("配置已保存到: %1").arg(jsonPath));
+	}
+	else
+	{
+		QMessageBox::critical(this, QStringLiteral("错误"),
+			QStringLiteral("保存配置失败"));
+	}
+}
+
+bool SpriteSliceEditorWidget::exportConfig(const QString& jsonPath)
+{
+	QJsonObject root;
+	root["version"] = "1.0";
+
+	// 精灵图信息
+	QJsonObject spriteSheet;
+	// 计算相对路径（相对于 JSON 文件所在目录）
+	QDir jsonDir = QFileInfo(jsonPath).absoluteDir();
+	QString relativePath = jsonDir.relativeFilePath(m_currentFilePath);
+	spriteSheet["imagePath"] = relativePath;
+	spriteSheet["imageWidth"] = m_currentPixmap.width();
+	spriteSheet["imageHeight"] = m_currentPixmap.height();
+	root["spriteSheet"] = spriteSheet;
+
+	// 网格设置
+	QJsonObject gridSettings;
+	gridSettings["tileWidth"] = ui->tileWidthSpinBox->value();
+	gridSettings["tileHeight"] = ui->tileHeightSpinBox->value();
+	gridSettings["marginX"] = ui->marginXSpinBox->value();
+	gridSettings["marginY"] = ui->marginYSpinBox->value();
+	gridSettings["spacingX"] = ui->spacingXSpinBox->value();
+	gridSettings["spacingY"] = ui->spacingYSpinBox->value();
+	root["gridSettings"] = gridSettings;
+
+	// 切片数据
+	QJsonArray slicesArray;
+	for (const SpriteSlice& slice : m_slices)
+	{
+		QJsonObject sliceObj;
+		sliceObj["id"] = slice.id.toString(QUuid::WithoutBraces);
+		sliceObj["name"] = slice.name;
+		sliceObj["x"] = slice.x;
+		sliceObj["y"] = slice.y;
+		sliceObj["width"] = slice.width;
+		sliceObj["height"] = slice.height;
+		sliceObj["group"] = slice.group;
+		sliceObj["tags"] = slice.tags;
+		sliceObj["isCollision"] = slice.isCollision;
+		sliceObj["isDecorationOnly"] = slice.isDecorationOnly;
+
+		QJsonObject anchorObj;
+		anchorObj["x"] = slice.anchor.x();
+		anchorObj["y"] = slice.anchor.y();
+		sliceObj["anchor"] = anchorObj;
+
+		sliceObj["collisionType"] = static_cast<int>(slice.collisionType);
+
+		slicesArray.append(sliceObj);
+	}
+	root["slices"] = slicesArray;
+
+	// 写入文件
+	QFile file(jsonPath);
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+	{
+		qWarning() << "Failed to open file for writing:" << jsonPath;
+		return false;
+	}
+
+	QJsonDocument doc(root);
+	file.write(doc.toJson(QJsonDocument::Indented));
+	file.close();
+
+	qDebug() << "Exported config to:" << jsonPath;
+	return true;
+}
+
+bool SpriteSliceEditorWidget::importConfig(const QString& jsonPath)
+{
+	QFile file(jsonPath);
+	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+		qWarning() << "Failed to open file for reading:" << jsonPath;
+		return false;
+	}
+
+	QByteArray data = file.readAll();
+	file.close();
+
+	QJsonParseError parseError;
+	QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+	if (parseError.error != QJsonParseError::NoError)
+	{
+		qWarning() << "JSON parse error:" << parseError.errorString();
+		return false;
+	}
+
+	QJsonObject root = doc.object();
+
+	// 读取精灵图信息
+	QJsonObject spriteSheet = root["spriteSheet"].toObject();
+	QString imagePath = spriteSheet["imagePath"].toString();
+
+	// 将相对路径转换为绝对路径
+	QDir jsonDir = QFileInfo(jsonPath).absoluteDir();
+	QString absoluteImagePath = jsonDir.absoluteFilePath(imagePath);
+
+	// 检查图片是否存在
+	if (!QFile::exists(absoluteImagePath))
+	{
+		QMessageBox::warning(this, QStringLiteral("警告"),
+			QStringLiteral("找不到精灵图文件: %1\n请确保图片位于正确位置").arg(absoluteImagePath));
+		return false;
+	}
+
+	// 加载精灵图
+	loadSpriteSheet(absoluteImagePath);
+
+	// 读取网格设置
+	if (root.contains("gridSettings"))
+	{
+		QJsonObject gridSettings = root["gridSettings"].toObject();
+		ui->tileWidthSpinBox->setValue(gridSettings["tileWidth"].toInt(32));
+		ui->tileHeightSpinBox->setValue(gridSettings["tileHeight"].toInt(32));
+		ui->marginXSpinBox->setValue(gridSettings["marginX"].toInt(0));
+		ui->marginYSpinBox->setValue(gridSettings["marginY"].toInt(0));
+		ui->spacingXSpinBox->setValue(gridSettings["spacingX"].toInt(0));
+		ui->spacingYSpinBox->setValue(gridSettings["spacingY"].toInt(0));
+	}
+
+	// 读取切片数据
+	m_slices.clear();
+	ui->sliceTableWidget->setRowCount(0);
+
+	QJsonArray slicesArray = root["slices"].toArray();
+	for (const QJsonValue& value : slicesArray)
+	{
+		QJsonObject sliceObj = value.toObject();
+
+		SpriteSlice slice;
+		slice.id = QUuid::fromString(sliceObj["id"].toString());
+		if (slice.id.isNull())
+			slice.id = QUuid::createUuid();
+
+		slice.name = sliceObj["name"].toString();
+		slice.x = sliceObj["x"].toInt();
+		slice.y = sliceObj["y"].toInt();
+		slice.width = sliceObj["width"].toInt();
+		slice.height = sliceObj["height"].toInt();
+		slice.group = sliceObj["group"].toString("Tiles");
+		slice.tags = sliceObj["tags"].toString();
+		slice.isCollision = sliceObj["isCollision"].toBool();
+		slice.isDecorationOnly = sliceObj["isDecorationOnly"].toBool();
+
+		if (sliceObj.contains("anchor"))
+		{
+			QJsonObject anchorObj = sliceObj["anchor"].toObject();
+			slice.anchor = QPointF(anchorObj["x"].toDouble(0.5), anchorObj["y"].toDouble(0.5));
+		}
+
+		slice.collisionType = static_cast<CollisionType>(sliceObj["collisionType"].toInt(0));
+
+		addSlice(slice);
+	}
+
+	// 清空检查器
+	clearInspector();
+	setInspectorEnabled(false);
+	clearSelectionHighlight();
+	m_currentSliceIndex = -1;
+
+	qDebug() << "Imported config from:" << jsonPath << "with" << m_slices.size() << "slices";
+	return true;
 }

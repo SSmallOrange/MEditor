@@ -1,4 +1,5 @@
 #pragma once
+#include "core/MapImporter.h"
 #include "core/SpriteSliceDefine.h"
 
 #include <QMainWindow>
@@ -55,6 +56,10 @@ private slots:
 	void onExportMap();
 	void onResetMap();
 	void onSaveMap();
+	void onImportMap();
+
+	// 文件导入
+	void applyImportResult(const MapImportResult& result);
 
 private:
 	AppContext* m_ctx = nullptr;

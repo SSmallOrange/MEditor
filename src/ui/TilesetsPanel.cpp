@@ -47,6 +47,8 @@ void TilesetsPanel::removeTilesetById(const QString& id)
 		ui.layoutScroll->removeWidget(block);
 		block->deleteLater();
 	}
+
+	m_tilesetDataMap.remove(id);
 }
 
 void TilesetsPanel::onSpriteSheetConfirmed(const SpriteSheetData& data)
@@ -60,4 +62,56 @@ void TilesetsPanel::onSpriteSheetConfirmed(const SpriteSheetData& data)
 
 	insertTilesetWidget(widget);
 	m_tilesetBlocks.insert(tilesetId, widget);
+
+	// 保存完整的 SpriteSheetData
+	m_tilesetDataMap.insert(tilesetId, data);
+}
+
+QVector<SpriteSheetData> TilesetsPanel::getAllTilesetData() const
+{
+	QVector<SpriteSheetData> result;
+	result.reserve(m_tilesetDataMap.size());
+
+	for (auto it = m_tilesetDataMap.constBegin(); it != m_tilesetDataMap.constEnd(); ++it)
+	{
+		result.append(it.value());
+	}
+
+	return result;
+}
+
+void TilesetsPanel::clearAllTilesets()
+{
+	// 清除所有 widget
+	for (auto it = m_tilesetBlocks.begin(); it != m_tilesetBlocks.end(); ++it)
+	{
+		if (auto* block = it.value())
+		{
+			ui.layoutScroll->removeWidget(block);
+			block->deleteLater();
+		}
+	}
+
+	m_tilesetBlocks.clear();
+	m_tilesetDataMap.clear();
+}
+
+bool TilesetsPanel::findSliceById(const QString& tilesetId, const QString& sliceId, SpriteSlice& outSlice, QPixmap& outPixmap) const
+{
+	if (!m_tilesetDataMap.contains(tilesetId))
+		return false;
+
+	const SpriteSheetData& data = m_tilesetDataMap[tilesetId];
+
+	for (const SpriteSlice& slice : data.slices)
+	{
+		if (slice.id.toString(QUuid::WithoutBraces) == sliceId)
+		{
+			outSlice = slice;
+			outPixmap = data.pixmap.copy(slice.x, slice.y, slice.width, slice.height);
+			return true;
+		}
+	}
+
+	return false;
 }

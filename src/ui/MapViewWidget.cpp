@@ -519,6 +519,11 @@ MapTileItem* MapViewWidget::copyTileToGrid(MapTileItem* sourceTile, int gridX, i
 	newTile->setTags(sourceTile->tags());
 	newTile->setDisplayName(sourceTile->displayName());
 
+	// 复制翻转和旋转状态
+	newTile->setFlipX(sourceTile->isFlippedX());
+	newTile->setFlipY(sourceTile->isFlippedY());
+	newTile->setRotation(sourceTile->rotation());
+
 	// 连接信号
 	connect(newTile, &MapTileItem::clicked, this, &MapViewWidget::onTileClicked);
 	connect(newTile, &MapTileItem::dragStarted, this, &MapViewWidget::onTileDragStarted);

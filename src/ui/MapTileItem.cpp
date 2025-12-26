@@ -347,13 +347,51 @@ void MapTileItem::updateDisplayPixmap()
 
 	QPixmap displayPixmap = m_originalPixmap;
 
-	// 应用翻转变换
-	if (m_flipX || m_flipY)
+	// 应用翻转和旋转变换
+	if (m_flipX || m_flipY || m_rotation != 0)
 	{
 		QTransform transform;
-		transform.scale(m_flipX ? -1 : 1, m_flipY ? -1 : 1);
-		displayPixmap = m_originalPixmap.transformed(transform);
+
+		if (m_flipX || m_flipY)
+		{
+			transform.scale(m_flipX ? -1 : 1, m_flipY ? -1 : 1);
+		}
+
+		if (m_rotation != 0)
+		{
+			transform.rotate(m_rotation);
+		}
+
+		displayPixmap = m_originalPixmap.transformed(transform, Qt::SmoothTransformation);
 	}
 
 	setPixmap(displayPixmap);
+}
+
+// 旋转
+void MapTileItem::setRotation(int degrees)
+{
+	
+	degrees = ((degrees % 360) + 360) % 360;
+	degrees = (degrees / 90) * 90;
+
+	if (m_rotation == degrees)
+		return;
+
+	m_rotation = degrees;
+	updateDisplayPixmap();
+}
+
+void MapTileItem::rotateClockwise()
+{
+	m_rotation = (m_rotation + 90) % 360;
+	updateDisplayPixmap();
+	qDebug() << "Tile rotated clockwise:" << m_rotation << "degrees";
+}
+
+void MapTileItem::rotateCounterClockwise()
+{
+	m_rotation = (m_rotation - 90 + 360) % 360;
+	updateDisplayPixmap();
+	qDebug() << "Tile rotated counter-clockwise:" << m_rotation << "degrees";
 }

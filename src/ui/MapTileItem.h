@@ -70,6 +70,12 @@ public:
 	void toggleFlipX();
 	void toggleFlipY();
 
+	// 旋转
+	int rotation() const { return m_rotation; }
+	void setRotation(int degrees);
+	void rotateClockwise();        // 顺时针旋转
+	void rotateCounterClockwise(); // 逆时针旋转
+
 	// 角落复制相关
 	bool isCopyDragging() const { return m_copyDragging; }
 	CornerZone currentCornerZone() const { return m_currentCornerZone; }
@@ -138,6 +144,8 @@ private:
 	bool m_flipX = false;
 	bool m_flipY = false;
 	QPixmap m_originalPixmap;  // 保存原始未翻转的 pixmap
+
+	int m_rotation = 0;
 
 	// 复制
 	bool m_copyDragging = false;

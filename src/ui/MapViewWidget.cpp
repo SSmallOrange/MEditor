@@ -1092,6 +1092,22 @@ void MapViewWidget::keyPressEvent(QKeyEvent* event)
 		return;
 	}
 
+	// R 键旋转选中的瓦片
+	if (event->key() == Qt::Key_R && m_selectedTile)
+	{
+		if (event->modifiers() & Qt::ShiftModifier)
+		{
+			// Shift + R: 逆时针旋转
+			m_selectedTile->rotateCounterClockwise();
+		}
+		else
+		{
+			// R: 顺时针旋转
+			m_selectedTile->rotateClockwise();
+		}
+		return;
+	}
+
 	QGraphicsView::keyPressEvent(event);
 }
 
@@ -1203,7 +1219,7 @@ void MapViewWidget::clearAllTiles()
 void MapViewWidget::placeTileAt(int gridX, int gridY, const QString& tilesetId, const SpriteSlice& slice,
 	const QPixmap& pixmap, int layer, const QString& displayName,
 	CollisionType collisionType, const QString& tags,
-	bool flipX, bool flipY)
+	bool flipX, bool flipY, int rotation)
 {
 	// 检查边界
 	int gridW = slice.width / m_tileWidth;
@@ -1252,6 +1268,12 @@ void MapViewWidget::placeTileAt(int gridX, int gridY, const QString& tilesetId, 
 	if (flipY)
 	{
 		tileItem->setFlipY(true);
+	}
+
+	// 设置旋转状态
+	if (rotation != 0)
+	{
+		tileItem->setRotation(rotation);
 	}
 
 	// 连接信号

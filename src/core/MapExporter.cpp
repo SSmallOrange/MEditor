@@ -314,7 +314,7 @@ QJsonObject MapExporter::buildTileData(MapTileItem* tile, const QMap<QString, in
 	QJsonObject transform;
 	transform["flipX"] = tile->isFlippedX();
 	transform["flipY"] = tile->isFlippedY();
-	transform["rotation"] = 0;
+	transform["rotation"] = tile->rotation();	// 角度制
 	tileObj["transform"] = transform;
 
 	// ========== 图层信息 ==========

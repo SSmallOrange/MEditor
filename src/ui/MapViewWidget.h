@@ -43,7 +43,7 @@ public:
 	void placeTileAt(int gridX, int gridY, const QString& tilesetId, const SpriteSlice& slice,
 		const QPixmap& pixmap, int layer, const QString& displayName,
 		CollisionType collisionType, const QString& tags,
-		bool flipX = false, bool flipY = false);
+		bool flipX = false, bool flipY = false, int rotation = 0);
 
 public slots:
 	// …Ë÷√ Ù–‘

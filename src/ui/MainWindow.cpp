@@ -553,7 +553,8 @@ void MainWindow::applyImportResult(const MapImportResult& result)
 				static_cast<CollisionType>(tileData.collisionTypeId),
 				tileData.tags,
 				tileData.flipX,
-				tileData.flipY
+				tileData.flipY,
+				tileData.rotation
 			);
 		}
 		else
